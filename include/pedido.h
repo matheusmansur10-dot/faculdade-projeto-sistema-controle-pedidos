@@ -18,4 +18,6 @@ typedef struct
     double subtotal; // valor (quantidade * preco do produto)
 } ItemPedido;
 
+int analisarPedido(int id);
+
 #endif // PEDIDO_H
