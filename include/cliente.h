@@ -1,41 +1,24 @@
 #ifndef CLIENTE_H
 #define CLIENTE_H
 
-// Classificar o tipo de cliente 
-typedef enum 
-{
-    PESSOA_FISICA,          // PF
-    PESSOA_JURIDICA         // PJ
-} TipoCliente;
-
-// Dados de pessoa física
-typedef struct 
-{
-    char CPF[15];           // Ex: "000.000.000-00"
-} DadosPessoaFisica;
-
-// Dados de pessoa jurídica
-typedef struct
-{
-    char CNPJ[20];          // Ex: "00.000.000/0000-00"
-    char razao_social[100]; // Nome oficial da empresa
-} DadosPessoaJuridica;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef struct 
 {
     int id;                // identificação do cliente
-    TipoCliente tipo;      // campo para armazenar se é PF ou PJ
+    char tipo_cliente;     // "F" = pessoa física; "J" = pessoa jurídica
+
     char nome[100];        // nome do cliente 
     char endereco[200];    // endereço do cliente
     char telefone[20];     // telefone do cliente
+
+    // Campos exclusivos dependendo do tipo de cliente 
+    char CPF[15];           // ex: 000.000.000-00
+    char CNPJ[20];          // ex: 00.000.000/0000-00
+    char razao_social[100]; // nome oficial da empresa 
+    
 } Cliente;
-
-// Armazenar somente os dados exclusivos(PF ou PJ)
-union 
-{
-    DadosPessoaFisica PF;   // Armazena os dados exclusivos de pessoa física
-    DadosPessoaJuridica PJ; // Armazena os dados exclusivos de pessoa jurídica
-} DadosTipoCliente;
-
 
 #endif // CLIENTE_H
