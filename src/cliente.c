@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 void menuCliente()
 {
     int opcao = -1;
@@ -18,7 +22,53 @@ void menuCliente()
 
         if(opcao == 1)
         {
-            // cadastrarCliente();
+            // Essa função lê os dado do usuário, analisa e adiciona no vetor.
+            void cadastrarCliente()
+            {
+                Cliente novo;
+                memset(&novo, 0, sizeof(Cliente));
+
+                printf("\n-- CADASTRAR CLIENTE --\n");
+
+                printf("ID (numero): ");
+                scanf("%d", &novo.id);
+
+                // limpa newline pendente
+                while(getchar() != '\n') { }
+
+                printf("Tipo ('F' para PF, 'J' para PJ): ");
+                scanf("%c", &novo.tipo_cliente);
+                while(getchar() != '\n') { }
+
+                printf("Nome: ");
+                fgets(novo.nome, sizeof(novo.nome), stdin);
+                if(novo.nome[strlen(novo.nome) - 1] == '\n') novo.nome[strlen(novo.nome) - 1] = '\0';
+
+                printf("Endereco: ");
+                fgets(novo.endereco, sizeof(novo.endereco), stdin);
+                if(novo.endereco[strlen(novo.endereco) - 1] == '\n') novo.endereco[strlen(novo.endereco) - 1] = '\0';
+
+                printf("Telefone: ");
+                fgets(novo.telefone, sizeof(novo.telefone), stdin);
+                if(novo.telefone[strlen(novo.telefone) - 1] == '\n') novo.telefone[strlen(novo.telefone) - 1] = '\0';
+
+                if(novo.tipo_cliente == 'F')
+                {
+                    printf("CPF (apenas numeros ou com pontuacao): ");
+                    fgets(novo.CPF, sizeof(novo.CPF), stdin);
+                if(novo.CPF[strlen(novo.CPF) - 1] == '\n') novo.CPF[strlen(novo.CPF) - 1] = '\0';
+                }
+                else if(novo.tipo_cliente == 'J')
+                {
+                    printf("CNPJ (apenas numeros ou com pontuacao): ");
+                    fgets(novo.CNPJ, sizeof(novo.CNPJ), stdin);
+                if(novo.CNPJ[strlen(novo.CNPJ) - 1] == '\n') novo.CNPJ[strlen(novo.CNPJ) - 1] = '\0';
+
+                printf("Razao social: ");
+                fgets(novo.razao_social, sizeof(novo.razao_social), stdin);
+                if(novo.razao_social[strlen(novo.razao_social) - 1] == '\n') novo.razao_social[strlen(novo.razao_social) - 1] = '\0';
+                }
+            }
         }
         else if(opcao == 2)
         {
@@ -192,3 +242,4 @@ int validarCNPJ(char CNPJ[])
 
     return 0;       // inválido
 }
+
