@@ -87,7 +87,7 @@ char *opcoes_produto[] = {
     "4. Listar Produtos",
     "5. Sair",
 };
-int num_opcoes = sizeof(opcoes_produto) / sizeof(char *);
+int num_opcoes_prod = sizeof(opcoes_produto) / sizeof(char *);
 void desenha_menu_produtos(WINDOW *menu_j, int destacado, int n_opcoes)
 {
     int x = 2, y = 2;
@@ -130,7 +130,7 @@ void mostrarMenuProdutos()
 
     while (1)
     {
-        desenha_menu_produtos(menu_j, destacado);
+        desenha_menu_produtos(menu_j, destacado, num_opcoes_prod);
         ch = wgetch(menu_j);
         switch (ch)
         {
@@ -139,11 +139,11 @@ void mostrarMenuProdutos()
                 destacado--;
             break;
         case KEY_DOWN:
-            if (destacado < num_opcoes - 1)
+            if (destacado < num_opcoes_prod - 1)
                 destacado++;
             break;
         case 10:
-            if (destacado == num_opcoes - 1)
+            if (destacado == num_opcoes_prod - 1)
             {
                 goto fim_menu;
             }
