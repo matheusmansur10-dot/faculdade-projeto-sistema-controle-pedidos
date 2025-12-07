@@ -8,6 +8,7 @@ int main() {
     noecho();
     keypad(stdscr, TRUE);
 
+    mostrarMenuProdutos();
     mostrarMenuPedidos();
 
     endwin();

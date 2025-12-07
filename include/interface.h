@@ -4,5 +4,6 @@
 #include <ncurses.h>
 
 void MostrarMenuPedidos();
+void mostarMenuProdutos();
 
 #endif // INTERFACE_H
