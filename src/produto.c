@@ -18,18 +18,18 @@ int analisarProduto(int id)
     return 0;
 }
 
-static Produto novo_produto;
-
-int cadastrarProduto(Produto novo_produto)
+int inserirProduto(Produto novo_produto)
 {
-    if (qtd_produtos >= MAX_PRODUTOS)
+    if (qtd_produtos >= MAX_PRODUTOS) // verifica se mais produtos podem ser cadastrados
     {
         return 0;
     }
 
-    if (novo_produto == analisarProduto(novo_produto))
-        else
-        {
-            lista_produtos[qtd_produtos] = novo_produto;
-        }
+    if (analisarProduto(novo_produto.id) == 1) // verifica se o produto já foi cadastrado. Se sim, a função a retornará 1
+    {
+        return 0;
+    }
+    lista_produtos[qtd_produtos] = novo_produto; // caso o produto ainda não tenha sido cadastrado, ele será adicionado ao banco de dados lista_produtos
+    qtd_produtos++;
+    return 1;
 }
