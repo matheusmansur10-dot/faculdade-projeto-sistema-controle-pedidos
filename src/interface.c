@@ -205,14 +205,18 @@ void mostrarMenuPedidos()
                 
                 // Se escolheu "Cadastrar Pedido" (Opção 0)
                 if (destacado == 0) {
-                    inserirPedido(); // <--- CHAMA SUA NOVA FUNÇÃO AQUI!
+                    inserirPedido(); 
                     
-                    // Depois que voltar do cadastro, precisamos redesenhar
                     // a caixa e limpar a tela para o menu não ficar bugado.
                     clear(); 
                     keypad(menu_win, TRUE); // Reativa as setas
                 }
-                break;
+                if (destacado == 1) { // Consultar (Opção 1)
+                    consultarPedido();
+                    clear();
+                    keypad(menu_win, TRUE);
+            }
+            break;
         }
     }
 fim_menu:

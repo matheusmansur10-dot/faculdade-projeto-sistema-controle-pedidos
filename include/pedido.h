@@ -19,10 +19,8 @@ typedef struct
 } ItemPedido;
 
 int analisarPedido(int id);
-/**
- Realiza o cadastro de um novo pedido.
- Solicita ID, Cliente e Produtos ao usuário.
- */
 void inserirPedido();
+void consultarPedido();
+
 
 #endif // PEDIDO_H
