@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "interface.h"
+#include "pedido.h"
 #include "cliente.h" 
 
 // Função para mostrar o menu do cliente em nCruses
@@ -196,12 +197,22 @@ void mostrarMenuPedidos()
             if (destacado < num_opcoes - 1)
                 destacado++;
             break;
-        case 10: // enter
-            if (destacado == num_opcoes - 1)
-            {
-                goto fim_menu;
-            }
-            break;
+        case 10: // Tecla ENTER
+                // Se escolheu "Voltar" (a última opção)
+                if (destacado == num_opcoes - 1) { 
+                    goto fim_menu; 
+                }
+                
+                // Se escolheu "Cadastrar Pedido" (Opção 0)
+                if (destacado == 0) {
+                    inserirPedido(); // <--- CHAMA SUA NOVA FUNÇÃO AQUI!
+                    
+                    // Depois que voltar do cadastro, precisamos redesenhar
+                    // a caixa e limpar a tela para o menu não ficar bugado.
+                    clear(); 
+                    keypad(menu_win, TRUE); // Reativa as setas
+                }
+                break;
         }
     }
 fim_menu:
