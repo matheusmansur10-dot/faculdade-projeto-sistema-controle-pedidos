@@ -1,6 +1,136 @@
 #include <ncurses.h>
+#include <stdio.h>
 #include <string.h>
 #include "interface.h"
+#include "pedido.h"
+#include "cliente.h" 
+
+// Função para mostrar o menu do cliente em nCruses
+// Esse menu usa nCurses e funciona assim:
+// Seta CIMA e BAIXO muda a opção selecionada
+// ENTER confirma
+// O item selecionado fica destacado
+void mostrarMenuCliente() {
+
+    // inicializa a biblioteca ncurses
+    initscr();            // inicia a tela
+    noecho();             // não mostra teclas digitadas
+    cbreak();             // leitura imediata de teclas
+    keypad(stdscr, TRUE); // ativa setas do teclado
+    curs_set(0);          // esconde o cursor
+
+    // ativa cor se disponível
+    if (has_colors()) {
+        start_color();
+        init_pair(1, COLOR_BLACK, COLOR_CYAN);  // cor da opção selecionada
+    }
+
+    int opcao = 0;      // guarda qual linha está selecionada
+    int tecla;          // captura a tecla pressionada
+
+    // lista das opções do menu
+    const char *opcoes[] = {
+        "Cadastrar Cliente",
+        "Consultar Cliente",
+        "Remover Cliente",
+        "Listar Clientes",
+        "Sair"
+    };
+
+    int totalOpcoes = 5;
+
+    while (1) {  // laço principal do menu
+
+        clear(); // limpa a tela
+
+        // título do menu
+        mvprintw(1, 2, "=== MENU DO CLIENTE (Ncurses) ===");
+        mvprintw(3, 2, "Use as setas ↑ e ↓ para navegar. ENTER para selecionar.");
+
+        // desenha as opções na tela
+        for (int i = 0; i < totalOpcoes; i++) {
+
+            if (i == opcao) {
+                // destaca a opção selecionada
+                attron(COLOR_PAIR(1));
+                mvprintw(6 + i, 4, "> %s", opcoes[i]);
+                attroff(COLOR_PAIR(1));
+            } else {
+                mvprintw(6 + i, 4, "  %s", opcoes[i]);
+            }
+        }
+
+        // refresh atualiza a tela
+        refresh();
+
+        // pega a tecla pressionada
+        tecla = getch();
+
+        // movimentação com setas
+        if (tecla == KEY_UP) {
+            opcao--;
+            if (opcao < 0)
+                opcao = totalOpcoes - 1;  // volta para o último
+        }
+        else if (tecla == KEY_DOWN) {
+            opcao++;
+            if (opcao >= totalOpcoes)
+                opcao = 0;          // volta para o primeiro
+        }
+        else if (tecla == '\n') {   // ENTER seleciona
+
+            // limpa a tela para rodar a ação
+            clear();
+            refresh();
+
+            // executa conforme a opção escolhida
+            switch (opcao) {
+
+                case 0: // Cadastrar
+                    endwin();        // fecha ncurses para poder usar scanf
+                    cadastrarCliente();
+                    initscr();
+                    keypad(stdscr, TRUE);
+                    noecho();
+                    break;
+
+                case 1: // Consultar
+                    endwin();
+                    consultarCliente();
+                    initscr();
+                    keypad(stdscr, TRUE);
+                    noecho();
+                    break;
+
+                case 2: // Remover
+                    endwin();
+                    removerCliente();
+                    initscr();
+                    keypad(stdscr, TRUE);
+                    noecho();
+                    break;
+
+                case 3: // Listar
+                    endwin();
+                    listarClientes();
+                    printf("\nPressione ENTER para voltar ao menu...");
+                    getchar();
+                    initscr();
+                    keypad(stdscr, TRUE);
+                    noecho();
+                    break;
+
+                case 4: // Sair
+                    endwin();               // fecha ncurses antes de sair
+                    salvarClientesCSV();    // salva tudo no CSV
+                    return;                 // sai da função (volta ao main)
+            }
+        }
+    }
+
+    endwin(); // encerra ncurses
+}
+
 
 char *opcoes_pedido[] = {
     "1. Cadastrar Pedido",
@@ -67,12 +197,22 @@ void mostrarMenuPedidos()
             if (destacado < num_opcoes - 1)
                 destacado++;
             break;
-        case 10: // enter
-            if (destacado == num_opcoes - 1)
-            {
-                goto fim_menu;
-            }
-            break;
+        case 10: // Tecla ENTER
+                // Se escolheu "Voltar" (a última opção)
+                if (destacado == num_opcoes - 1) { 
+                    goto fim_menu; 
+                }
+                
+                // Se escolheu "Cadastrar Pedido" (Opção 0)
+                if (destacado == 0) {
+                    inserirPedido(); // <--- CHAMA SUA NOVA FUNÇÃO AQUI!
+                    
+                    // Depois que voltar do cadastro, precisamos redesenhar
+                    // a caixa e limpar a tela para o menu não ficar bugado.
+                    clear(); 
+                    keypad(menu_win, TRUE); // Reativa as setas
+                }
+                break;
         }
     }
 fim_menu:
