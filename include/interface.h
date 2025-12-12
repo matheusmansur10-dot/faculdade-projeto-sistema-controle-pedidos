@@ -2,7 +2,8 @@
 #define INTERFACE_H
 #include <ncurses.h>
 
-
+void mostrarMenuPrincipal();
+void mostrarMenuClientes();
 void MostrarMenuPedidos();
 void mostarMenuProdutos();
 

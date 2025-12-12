@@ -5,6 +5,93 @@
 #include "pedido.h"
 #include "cliente.h" 
 
+// Menu principal do sistema 
+void mostrarMenuPrincipal() 
+{
+    int escolha = 0;  // guarda qual opção está selecionada
+    int tecla;        // guarda a tecla que o usuário pressiona
+    const int totalOp = 4;
+
+    // Lista com as opções do menu
+    char *opcoes[] = {
+        "1. Modulo de Clientes",
+        "2. Modulo de Produtos",
+        "3. Modulo de Pedidos",
+        "4. Sair do Sistema"
+    };
+
+    // Mantem o menu rodando até o usuário escolher "Sair"
+    while (1) 
+    {
+        clear(); // limpa toda a tela antes de desenhar o menu
+        // Centralização do menu 
+        int altura = 12;
+        int largura = 45;
+        int posY = (LINES - altura) / 2;
+        int posX = (COLS - largura) / 2;
+
+        WINDOW *menuwin = newwin(altura, largura, posY, posX);
+        box(menuwin, 0, 0);
+        mvwprintw(menuwin, 1, 14, "MENU PRINCIPAL");
+
+        // Desenhando cada uma das opções do menu
+        for (int i = 0; i < totalOp; i++) 
+        {
+            if (i == escolha) 
+            {
+                wattron(menuwin, A_REVERSE);
+                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
+                wattroff(menuwin, A_REVERSE);
+            } else {
+                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
+            }
+        }
+
+        mvwprintw(menuwin, altura - 2, 2, "Use as setas e Enter");
+
+        wrefresh(menuwin);
+
+        tecla = getch();
+
+        // Controle das setas e Enter do menu 
+        switch (tecla) {
+
+            case KEY_UP: 
+                escolha--;
+                if (escolha < 0)
+                    escolha = totalOp - 1; 
+                break;
+
+            case KEY_DOWN: 
+                escolha++;
+                if (escolha >= totalOp)
+                    escolha = 0; 
+                break;
+
+            case 10: 
+                endwin(); 
+                if (escolha == 0) {
+                    mostrarMenuClientes();
+                }
+                else if (escolha == 1) {
+                    mostrarMenuProdutos();
+                }
+                else if (escolha == 2) {
+                    mostrarMenuPedidos();
+                }
+                else if (escolha == 3) {
+                    return; 
+                }
+
+                initscr();
+                cbreak();
+                noecho();
+                keypad(stdscr, TRUE);
+                break;
+        }
+    }
+}
+
 // Função para mostrar o menu cliente em nCurses
 void mostrarMenuClientes() 
 {
