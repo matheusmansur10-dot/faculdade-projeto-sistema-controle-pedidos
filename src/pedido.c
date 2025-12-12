@@ -206,3 +206,59 @@ void removerPedido() {
     mvprintw(11, 2, "Pressione qualquer tecla para voltar...");
     getch();
 }
+void salvarPedidos() {
+    FILE *arquivo = fopen("pedidos.csv", "w"); // "w" = Write (Escrever Texto)
+    
+    if (arquivo == NULL) {
+        mvprintw(LINES-2, 2, "Erro ao salvar pedidos.csv!");
+        getch();
+        return;
+    }
+
+    // Opcional: Escrever um cabeçalho na primeira linha
+    fprintf(arquivo, "ID,ClienteID,Data,Total\n");
+
+    // Loop para salvar cada pedido, linha por linha
+    for (int i = 0; i < num_pedidos; i++) {
+        fprintf(arquivo, "%d,%d,%s,%.2f\n", 
+                lista_pedidos[i].id,
+                lista_pedidos[i].clienteId,
+                lista_pedidos[i].data,
+                lista_pedidos[i].total);
+    }
+
+    fclose(arquivo);
+}
+
+void carregarPedidos() {
+    FILE *arquivo = fopen("pedidos.csv", "r"); // "r" = Read (Ler Texto)
+    
+    if (arquivo == NULL) {
+        num_pedidos = 0; // Arquivo não existe? Começa do zero.
+        return;
+    }
+
+    // Variável lixo para pular o cabeçalho (se tiver)
+    char buffer[100];
+    fscanf(arquivo, "%s\n", buffer); // Lê a primeira linha (cabeçalho) e descarta
+
+    // Loop de Leitura
+    num_pedidos = 0;
+    while (num_pedidos < MAX_PEDIDOS) {
+        // Tenta ler 4 campos separados por vírgula
+        // O formato "%d,%d,%[^,],%lf" significa: Int, Int, String(até a vírgula), Double
+        int leu = fscanf(arquivo, "%d,%d,%[^,],%lf\n", 
+                         &lista_pedidos[num_pedidos].id,
+                         &lista_pedidos[num_pedidos].clienteId,
+                         lista_pedidos[num_pedidos].data,
+                         &lista_pedidos[num_pedidos].total);
+        
+        if (leu == 4) { // Se conseguiu ler os 4 campos com sucesso
+            num_pedidos++;
+        } else {
+            break; // Se não leu 4 coisas, provavelmente acabou o arquivo
+        }
+    }
+
+    fclose(arquivo);
+}
