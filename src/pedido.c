@@ -116,3 +116,34 @@ void consultarPedido() {
     mvprintw(12, 2, "Pressione qualquer tecla para voltar...");
     getch(); 
 }
+// --- Função de Listagem (Item 31) ---
+void listarPedidos() {
+    // 1. Prepara a tela
+    clear();
+    box(stdscr, 0, 0);
+    mvprintw(1, 2, "=== LISTA DE PEDIDOS ===");
+
+    // 2. Verifica se está vazio
+    if (num_pedidos == 0) {
+        mvprintw(3, 2, "Nenhum pedido cadastrado no sistema.");
+    } else {
+        // 3. Cabeçalho da Tabela
+        attron(A_BOLD);
+        mvprintw(3, 2, "ID   | CLIENTE  | DATA        | TOTAL");
+        mvprintw(4, 2, "------------------------------------------");
+        attroff(A_BOLD);
+
+        // 4. Loop para mostrar cada pedido
+        for (int i = 0; i < num_pedidos; i++) {
+            mvprintw(5 + i, 2, "%-4d | %-8d | %-11s | R$ %.2f", 
+                     lista_pedidos[i].id, 
+                     lista_pedidos[i].clienteId, 
+                     lista_pedidos[i].data, 
+                     lista_pedidos[i].total);
+        }
+    }
+
+    // 5. Finalização
+    mvprintw(LINES - 2, 2, "Pressione qualquer tecla para voltar...");
+    getch();
+}
