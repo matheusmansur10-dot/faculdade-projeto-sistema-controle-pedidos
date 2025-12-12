@@ -215,7 +215,17 @@ void mostrarMenuPedidos()
                     consultarPedido();
                     clear();
                     keypad(menu_win, TRUE);
-            }
+                }
+                if (destacado == 2) { 
+                    removerPedido();
+                    clear();
+                    keypad(menu_win, TRUE);
+                }
+                if (destacado == 3) { 
+                    listarPedidos();
+                    clear();
+                    keypad(menu_win, TRUE);
+                }
             break;
         }
     }

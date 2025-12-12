@@ -21,6 +21,13 @@ typedef struct
 int analisarPedido(int id);
 void inserirPedido();
 void consultarPedido();
+void listarPedidos();
+void removerPedido();
+
+// persistencia
+void salvarPedidos();
+void carregarPedidos();
+
 
 
 #endif // PEDIDO_H

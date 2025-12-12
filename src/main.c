@@ -1,5 +1,6 @@
 #include <ncurses.h> // Inclui a biblioteca de interface
 #include "interface.h" 
+#include "pedido.h"
 
 int main() {
  
@@ -8,9 +9,16 @@ int main() {
     noecho();
     keypad(stdscr, TRUE);
 
+    carregarClientes();
+    carregarPedidos();
+
     mostrarMenuPedidos();
     mostrarMenuProdutos();
     mostrarMenuCliente();
+
+    salvarPedidos();
+
+    
     endwin();
     return 0;
 }
