@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "cliente.h"
+#include "persistencia.h"
 
 // Vetores dos clientes 
 PessoaFisica listaPF[MAX_CLIENTES];     // vetor que guarda pessoas físicas (PF)
@@ -217,6 +218,7 @@ void cadastrarCliente()
         totalPF++;
 
         printf("\nPessoa Física cadastrada com sucesso!\n");
+        salvarClientesCSV();
     }
 
     // se for pessoa jurídica
@@ -257,6 +259,7 @@ void cadastrarCliente()
         totalPJ++;
 
         printf("\nPessoa Jurídica cadastrada com sucesso!\n");
+        salvarClientesCSV();
     }
     else 
     {  
@@ -361,92 +364,3 @@ void listarClientes()
     }
 }
 
-// Salvar clientes no CSV
-void salvarClientesCSV()
-{
-    // CAMINHO CORRIGIDO: data/Clientes.csv
-    FILE *arquivo = fopen("data/Clientes.csv", "w"); 
-
-    if (arquivo == NULL) 
-    {
-        printf("Erro ao abrir arquivo data/Clientes.csv! Verifique se a pasta 'data' existe.\n");
-        return;
-    }
-
-    // Salva PF (F;...)
-    for (int i = 0; i < totalPF; i++) 
-    {
-        fprintf(arquivo, "F;%d;%s;%s;%s;%s;%s\n",
-            listaPF[i].base.id,
-            listaPF[i].nome,
-            listaPF[i].cpf,
-            listaPF[i].base.endereco,
-            listaPF[i].base.telefone,
-            listaPF[i].base.email);
-    }
-
-    // Salva PJ (J;...)
-    for (int i = 0; i < totalPJ; i++) 
-    {
-        fprintf(arquivo, "J;%d;%s;%s;%s;%s;%s\n",
-            listaPJ[i].base.id,
-            listaPJ[i].razaoSocial,
-            listaPJ[i].cnpj,
-            listaPJ[i].base.endereco,
-            listaPJ[i].base.telefone,
-            listaPJ[i].base.email);
-    }
-
-    fclose(arquivo);
-}
-
-// Carregar clientes (A FUNÇÃO QUE FALTAVA!)
-void carregarClientes()
-{
-    // CAMINHO CORRIGIDO: data/Clientes.csv
-    FILE *arquivo = fopen("data/Clientes.csv", "r");
-
-    if (arquivo == NULL) 
-    {
-        totalPF = 0;
-        totalPJ = 0;
-        return; // Arquivo não existe? Primeira vez rodando.
-    }
-
-    totalPF = 0;
-    totalPJ = 0;
-    char tipo;
-
-    while (1)
-    {
-        // Tenta ler o tipo (F ou J)
-        int resultado = fscanf(arquivo, " %c;", &tipo);
-        
-        if (resultado == EOF) break; 
-
-        if (tipo == 'F') 
-        {
-            fscanf(arquivo, "%d;%[^;];%[^;];%[^;];%[^;];%[^\n]", 
-                &listaPF[totalPF].base.id,
-                listaPF[totalPF].nome,
-                listaPF[totalPF].cpf,
-                listaPF[totalPF].base.endereco,
-                listaPF[totalPF].base.telefone,
-                listaPF[totalPF].base.email);
-            totalPF++;
-        }
-        else if (tipo == 'J')
-        {
-            fscanf(arquivo, "%d;%[^;];%[^;];%[^;];%[^;];%[^\n]", 
-                &listaPJ[totalPJ].base.id,
-                listaPJ[totalPJ].razaoSocial,
-                listaPJ[totalPJ].cnpj,
-                listaPJ[totalPJ].base.endereco,
-                listaPJ[totalPJ].base.telefone,
-                listaPJ[totalPJ].base.email);
-            totalPJ++;
-        }
-    }
-
-    fclose(arquivo);
-}

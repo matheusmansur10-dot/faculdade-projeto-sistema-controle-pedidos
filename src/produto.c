@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "produto.h"
+#include "persistencia.h"
 #define MAX_PRODUTOS 100 // determina o tamanho maximo do array estático
 
-static Produto lista_produtos[MAX_PRODUTOS]; // variavel do tipo produto
-static int qtd_produtos = 0;                 // numero de produtos cadastrados
+Produto lista_produtos[MAX_PRODUTOS]; // variavel do tipo produto
+int qtd_produtos = 0;                 // numero de produtos cadastrados
 
 int analisarProduto(int id)
 {
@@ -57,7 +58,7 @@ void inserirProduto()
     scanf(" %[^\n]", novo_produto.descricao);
 
     printf("Informe o preço (R$): ");
-    scanf("%f", &novo_produto.preco);
+    scanf("%lf", &novo_produto.preco);
 
     printf("Informe a quantidade em estoque: ");
     scanf("%d", &novo_produto.estoque);
