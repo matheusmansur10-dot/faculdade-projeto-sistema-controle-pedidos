@@ -147,3 +147,62 @@ void listarPedidos() {
     mvprintw(LINES - 2, 2, "Pressione qualquer tecla para voltar...");
     getch();
 }
+// --- Função de Remoção (Item 32) ---
+void removerPedido() {
+    int id_busca;
+    int encontrado = 0;
+    char confirmacao;
+
+    // 1. Prepara a tela
+    clear();
+    box(stdscr, 0, 0);
+    mvprintw(1, 2, "=== REMOVER PEDIDO ===");
+
+    // 2. Pede o ID
+    mvprintw(3, 2, "Digite o ID do Pedido para EXCLUIR: ");
+    echo();
+    scanw("%d", &id_busca);
+    noecho();
+
+    // 3. Procura na lista
+    for (int i = 0; i < num_pedidos; i++) {
+        if (lista_pedidos[i].id == id_busca) {
+            encontrado = 1;
+
+            // Mostra o que vai ser apagado para confirmar
+            mvprintw(5, 2, "Encontrado: Cliente %d | Total R$ %.2f", 
+                     lista_pedidos[i].clienteId, lista_pedidos[i].total);
+            
+            mvprintw(7, 2, "Tem certeza? (s/n): ");
+            echo();
+            scanw(" %c", &confirmacao); // O espaço antes do %c é importante!
+            noecho();
+
+            if (confirmacao == 's' || confirmacao == 'S') {
+                // --- O PULO DO GATO: REMOÇÃO COM SHIFT ---
+                // Move todos os pedidos da frente uma casa para trás
+                for (int j = i; j < num_pedidos - 1; j++) {
+                    lista_pedidos[j] = lista_pedidos[j + 1];
+                }
+                
+                num_pedidos--; // Diminui o tamanho da lista
+                
+                attron(A_BOLD);
+                mvprintw(9, 2, "Sucesso! Pedido removido.");
+                attroff(A_BOLD);
+            } else {
+                mvprintw(9, 2, "Operacao cancelada.");
+            }
+            break; // Sai do loop de busca
+        }
+    }
+
+    if (encontrado == 0) {
+        attron(A_BOLD);
+        mvprintw(5, 2, "ERRO: Pedido ID %d nao encontrado.", id_busca);
+        attroff(A_BOLD);
+    }
+
+    mvprintw(11, 2, "Pressione qualquer tecla para voltar...");
+    getch();
+}
