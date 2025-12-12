@@ -1,9 +1,9 @@
-#include <ncurses.h> // Inclui a biblioteca de interface
+#include <ncurses.h> 
 #include "interface.h" 
 #include "pedido.h"
 
-int main() {
- 
+int main() 
+{
     initscr();
     cbreak();
     noecho();
