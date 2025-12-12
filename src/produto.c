@@ -57,7 +57,7 @@ void inserirProduto()
     scanf(" %[^\n]", novo_produto.descricao);
 
     printf("Informe o preço (R$): ");
-    scanf("%f", &novo_produto.preco);
+    scanf("%lf", &novo_produto.preco);
 
     printf("Informe a quantidade em estoque: ");
     scanf("%d", &novo_produto.estoque);

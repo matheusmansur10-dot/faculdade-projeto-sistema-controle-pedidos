@@ -1,18 +1,36 @@
 {
-  "configurations": [
+  "version": "2.0.0",
+  "tasks": [
     {
-      "name": "windows-gcc-x86",
-      "includePath": [
-        "${workspaceFolder}/**"
+      "type": "shell",
+      "label": "Build Project Sistema",
+      "command": "/usr/bin/gcc", // Use "gcc.exe" se estiver no Windows
+      "args": [
+        "-g",
+        // 1. Argumento para dizer onde buscar os headers:
+        "-I",
+        "${workspaceFolder}/include",
+        // 2. Arquivos fonte para compilar:
+        "${workspaceFolder}/src/main.c",
+        "${workspaceFolder}/src/interface.c",
+        "${workspaceFolder}/src/cliente.c",
+        "${workspaceFolder}/src/pedido.c",
+        "${workspaceFolder}/src/produto.c",
+        // 3. Configuração de saída
+        "-o",
+        "${workspaceFolder}/sistema" // O programa final 'sistema' fica na raiz
       ],
-      "compilerPath": "C:/MinGW/Bin/gcc.exe",
-      "cStandard": "${default}",
-      "cppStandard": "${default}",
-      "intelliSenseMode": "windows-gcc-x86",
-      "compilerArgs": [
-        ""
-      ]
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "Compila todos os arquivos .c e inclui headers da pasta include."
     }
-  ],
-  "version": 4
+  ]
 }

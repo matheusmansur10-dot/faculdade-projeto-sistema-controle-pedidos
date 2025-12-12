@@ -3,14 +3,16 @@
 #include <string.h>
 #include "interface.h"
 #include "pedido.h"
-#include "cliente.h" 
+#include "cliente.h"
+#include "produto.h"
 
 // Função para mostrar o menu do cliente em nCruses
 // Esse menu usa nCurses e funciona assim:
 // Seta CIMA e BAIXO muda a opção selecionada
 // ENTER confirma
 // O item selecionado fica destacado
-void mostrarMenuCliente() {
+void mostrarMenuCliente()
+{
 
     // inicializa a biblioteca ncurses
     initscr();            // inicia a tela
@@ -20,13 +22,14 @@ void mostrarMenuCliente() {
     curs_set(0);          // esconde o cursor
 
     // ativa cor se disponível
-    if (has_colors()) {
+    if (has_colors())
+    {
         start_color();
-        init_pair(1, COLOR_BLACK, COLOR_CYAN);  // cor da opção selecionada
+        init_pair(1, COLOR_BLACK, COLOR_CYAN); // cor da opção selecionada
     }
 
-    int opcao = 0;      // guarda qual linha está selecionada
-    int tecla;          // captura a tecla pressionada
+    int opcao = 0; // guarda qual linha está selecionada
+    int tecla;     // captura a tecla pressionada
 
     // lista das opções do menu
     const char *opcoes[] = {
@@ -34,12 +37,12 @@ void mostrarMenuCliente() {
         "Consultar Cliente",
         "Remover Cliente",
         "Listar Clientes",
-        "Sair"
-    };
+        "Sair"};
 
     int totalOpcoes = 5;
 
-    while (1) {  // laço principal do menu
+    while (1)
+    { // laço principal do menu
 
         clear(); // limpa a tela
 
@@ -48,14 +51,18 @@ void mostrarMenuCliente() {
         mvprintw(3, 2, "Use as setas ↑ e ↓ para navegar. ENTER para selecionar.");
 
         // desenha as opções na tela
-        for (int i = 0; i < totalOpcoes; i++) {
+        for (int i = 0; i < totalOpcoes; i++)
+        {
 
-            if (i == opcao) {
+            if (i == opcao)
+            {
                 // destaca a opção selecionada
                 attron(COLOR_PAIR(1));
                 mvprintw(6 + i, 4, "> %s", opcoes[i]);
                 attroff(COLOR_PAIR(1));
-            } else {
+            }
+            else
+            {
                 mvprintw(6 + i, 4, "  %s", opcoes[i]);
             }
         }
@@ -67,70 +74,73 @@ void mostrarMenuCliente() {
         tecla = getch();
 
         // movimentação com setas
-        if (tecla == KEY_UP) {
+        if (tecla == KEY_UP)
+        {
             opcao--;
             if (opcao < 0)
-                opcao = totalOpcoes - 1;  // volta para o último
+                opcao = totalOpcoes - 1; // volta para o último
         }
-        else if (tecla == KEY_DOWN) {
+        else if (tecla == KEY_DOWN)
+        {
             opcao++;
             if (opcao >= totalOpcoes)
-                opcao = 0;          // volta para o primeiro
+                opcao = 0; // volta para o primeiro
         }
-        else if (tecla == '\n') {   // ENTER seleciona
+        else if (tecla == '\n')
+        { // ENTER seleciona
 
             // limpa a tela para rodar a ação
             clear();
             refresh();
 
             // executa conforme a opção escolhida
-            switch (opcao) {
+            switch (opcao)
+            {
 
-                case 0: // Cadastrar
-                    endwin();        // fecha ncurses para poder usar scanf
-                    cadastrarCliente();
-                    initscr();
-                    keypad(stdscr, TRUE);
-                    noecho();
-                    break;
+            case 0:       // Cadastrar
+                endwin(); // fecha ncurses para poder usar scanf
+                cadastrarCliente();
+                initscr();
+                keypad(stdscr, TRUE);
+                noecho();
+                break;
 
-                case 1: // Consultar
-                    endwin();
-                    consultarCliente();
-                    initscr();
-                    keypad(stdscr, TRUE);
-                    noecho();
-                    break;
+            case 1: // Consultar
+                endwin();
+                consultarCliente();
+                initscr();
+                keypad(stdscr, TRUE);
+                noecho();
+                break;
 
-                case 2: // Remover
-                    endwin();
-                    removerCliente();
-                    initscr();
-                    keypad(stdscr, TRUE);
-                    noecho();
-                    break;
+            case 2: // Remover
+                endwin();
+                removerCliente();
+                initscr();
+                keypad(stdscr, TRUE);
+                noecho();
+                break;
 
-                case 3: // Listar
-                    endwin();
-                    listarClientes();
-                    printf("\nPressione ENTER para voltar ao menu...");
-                    getchar();
-                    initscr();
-                    keypad(stdscr, TRUE);
-                    noecho();
-                    break;
+            case 3: // Listar
+                endwin();
+                listarClientes();
+                printf("\nPressione ENTER para voltar ao menu...");
+                getchar();
+                initscr();
+                keypad(stdscr, TRUE);
+                noecho();
+                break;
 
-                case 4: // Sair
-                    endwin();               // fecha ncurses antes de sair
-                    salvarClientesCSV();    // salva tudo no CSV
-                    return;                 // sai da função (volta ao main)
+            case 4:                  // Sair
+                endwin();            // fecha ncurses antes de sair
+                salvarClientesCSV(); // salva tudo no CSV
+                return;              // sai da função (volta ao main)
             }
         }
     }
 
     endwin(); // encerra ncurses
 }
-
 
 char *opcoes_pedido[] = {
     "1. Cadastrar Pedido",
@@ -198,34 +208,22 @@ void mostrarMenuPedidos()
                 destacado++;
             break;
         case 10: // Tecla ENTER
-                // Se escolheu "Voltar" (a última opção)
-                if (destacado == num_opcoes - 1) { 
-                    goto fim_menu; 
-                }
-                
-                // Se escolheu "Cadastrar Pedido" (Opção 0)
-                if (destacado == 0) {
-                    inserirPedido(); 
-                    
-                    // a caixa e limpar a tela para o menu não ficar bugado.
-                    clear(); 
-                    keypad(menu_win, TRUE); // Reativa as setas
-                }
-                if (destacado == 1) { // Consultar (Opção 1)
-                    consultarPedido();
-                    clear();
-                    keypad(menu_win, TRUE);
-                }
-                if (destacado == 2) { 
-                    removerPedido();
-                    clear();
-                    keypad(menu_win, TRUE);
-                }
-                if (destacado == 3) { 
-                    listarPedidos();
-                    clear();
-                    keypad(menu_win, TRUE);
-                }
+            // Se escolheu "Voltar" (a última opção)
+            if (destacado == num_opcoes - 1)
+            {
+                goto fim_menu;
+            }
+
+            // Se escolheu "Cadastrar Pedido" (Opção 0)
+            if (destacado == 0)
+            {
+                inserirPedido(); // <--- CHAMA SUA NOVA FUNÇÃO AQUI!
+
+                // Depois que voltar do cadastro, precisamos redesenhar
+                // a caixa e limpar a tela para o menu não ficar bugado.
+                clear();
+                keypad(menu_win, TRUE); // Reativa as setas
+            }
             break;
         }
     }
@@ -235,11 +233,11 @@ fim_menu:
 
 // Interface Menu Principal Produtos
 char *opcoes_produto[] = {
-    "1. Cadastrar Produto",
-    "2. Consultar Produto",
-    "3. Remover Produto",
-    "4. Listar Produtos",
-    "5. Sair",
+    "1.Cadastrar Produto",
+    "2.Consultar Produto",
+    "3.Remover Produto",
+    "4.Listar Produtos",
+    "5.Sair",
 };
 int num_opcoes_prod = sizeof(opcoes_produto) / sizeof(char *);
 void desenha_menu_produtos(WINDOW *menu_j, int destacado, int n_opcoes)
@@ -303,7 +301,41 @@ void mostrarMenuProdutos()
             }
             break;
         }
+        delwin(menu_j); // Libera a memória da janela
+        endwin();       // Sai do modo ncurses (permite I/O normal)
+        // 2. EXECUTA A FUNÇÃO CORRESPONDENTE
+        switch (destacado)
+        {
+        case 0: // 1.Cadastrar Produto
+            inserirProduto();
+            break;
+        case 1: // 2.Consultar Produto
+            consultarProduto();
+            break;
+        case 2: // 3.Remover Produto
+            removerProduto();
+            break;
+        case 3: // 4.Listar Produtos
+            listarProdutos();
+            // Adiciona pausa após listar (necessário após endwin)
+            printf("\nPressione ENTER para voltar ao menu...");
+            getchar();
+            break;
+        }
+        // 3. RELIGA O NCURSES (Para voltar ao menu gráfico)
+        initscr();
+        keypad(stdscr, TRUE);
+        noecho();
+        // 4. RECria a janela (necessário após endwin())
+        menu_j = newwin(altura, largura, inicio_y, inicio_x);
+        keypad(menu_j, TRUE);
+
+        break; // Sai do switch(ch)
     }
-fim_menu:
+}
+fim_menu :
+    // Lógica de saída final:
+    // salvarProdutosCSV();
     delwin(menu_j);
+endwin(); // Garante que o ncurses seja desligado ao sair da função
 }
