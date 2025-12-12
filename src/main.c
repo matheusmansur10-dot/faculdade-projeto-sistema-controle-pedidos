@@ -9,6 +9,7 @@ int main() {
     noecho();
     keypad(stdscr, TRUE);
 
+    carregarClientes();
     carregarPedidos();
 
     mostrarMenuPedidos();

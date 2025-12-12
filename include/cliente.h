@@ -43,6 +43,7 @@ void listarClientes();          // lista todos os clientes cadastrados
 int validarCPF(char cpf[]);     // valida CPF seguindo a Receita Federal
 int validarCNPJ(char cnpj[]);   // valida CNPJ seguindo a Receita Federal
 
-void salvarClientesCSV();       // salva clientes no arquivo CSV
+void salvarClientesCSV();
+void carregarClientes();       // salva clientes no arquivo CSV
 
 #endif // CLIENTE_H

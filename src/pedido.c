@@ -1,6 +1,8 @@
 #include <ncurses.h> // Para desenhar na tela e ler o teclado
 #include <string.h>  // Para copiar textos (strcpy)
 #include "pedido.h"  // O "cardápio" deste módulo
+#include "cliente.h"
+#include "produto.h"
 
 
 // --- Armazenamento de Dados ---
@@ -16,6 +18,26 @@ int analisarPedido(int id) {
         }
     }
     return 0; // Não encontrou
+}
+// --- Função Auxiliar para verificar se Cliente existe ---
+// Retorna 1 se existe, 0 se não existe.
+int clienteExiste(int id) {
+    // 1. Procura na lista de Pessoa Física
+    for (int i = 0; i < totalPF; i++) {
+        // Note que o ID está dentro de 'base'
+        if (listaPF[i].base.id == id) {
+            return 1; // Encontrou em PF
+        }
+    }
+
+    // 2. Procura na lista de Pessoa Jurídica
+    for (int i = 0; i < totalPJ; i++) {
+        if (listaPJ[i].base.id == id) {
+            return 1; // Encontrou em PJ
+        }
+    }
+
+    return 0; // Não encontrou em lugar nenhum
 }
 
 // --- Função Principal de Cadastro (Item 29) ---
@@ -47,6 +69,16 @@ void inserirPedido() {
     // 4. Pede o ID do Cliente
     mvprintw(4, 2, "Digite o ID do Cliente: ");
     scanw("%d", &cliente_temp);
+    if(clienteExiste(cliente_temp) == 0) {
+        attron(A_BOLD);
+        mvprintw(6, 2, "ERRO: Cliente ID %d nao encontrado!", cliente_temp);
+        attroff(A_BOLD);
+        mvprintw(8, 2, "Dica: Cadastre o cliente no modulo de Clientes.");
+        mvprintw(10, 2, "Pressione qualquer tecla para voltar...");
+        noecho();
+        getch();
+        return; // Cancela e volta
+    }
 
     // 5. Pede a Data
     mvprintw(5, 2, "Data (dd/mm/aaaa): ");
