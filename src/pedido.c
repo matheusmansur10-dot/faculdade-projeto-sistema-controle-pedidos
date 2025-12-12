@@ -1,241 +1,140 @@
-#include <ncurses.h> // Para desenhar na tela e ler o teclado
-#include <string.h>  // Para copiar textos (strcpy)
-#include "pedido.h"  // O "cardápio" deste módulo
-#include "cliente.h"
-#include "produto.h"
-#include "persistencia.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ncurses.h> // Interface
+#include "pedido.h"
+#include "cliente.h" // Para validar se cliente existe
+#include "produto.h" // Para pegar preço do produto
+#include "persistencia.h" 
 
-
-// --- Armazenamento de Dados ---
-#define MAX_PEDIDOS 100 
+// CRIAÇÃO DAS VARIÁVEIS GLOBAIS
 Pedido lista_pedidos[MAX_PEDIDOS];
 int num_pedidos = 0;
 
-// --- Função Auxiliar (Item 28) ---
-int analisarPedido(int id) {
-    for (int i = 0; i < num_pedidos; i++) {
-        if (lista_pedidos[i].id == id) {
-            return 1; // Encontrou
-        }
-    }
-    return 0; // Não encontrou
-}
-// --- Função Auxiliar para verificar se Cliente existe ---
-// Retorna 1 se existe, 0 se não existe.
+// Funções auxiliares simples
 int clienteExiste(int id) {
-    // 1. Procura na lista de Pessoa Física
-    for (int i = 0; i < totalPF; i++) {
-        // Note que o ID está dentro de 'base'
-        if (listaPF[i].base.id == id) {
-            return 1; // Encontrou em PF
-        }
-    }
-
-    // 2. Procura na lista de Pessoa Jurídica
-    for (int i = 0; i < totalPJ; i++) {
-        if (listaPJ[i].base.id == id) {
-            return 1; // Encontrou em PJ
-        }
-    }
-
-    return 0; // Não encontrou em lugar nenhum
+    for(int i=0; i<totalPF; i++) if(listaPF[i].base.id == id) return 1;
+    for(int i=0; i<totalPJ; i++) if(listaPJ[i].base.id == id) return 1;
+    return 0;
 }
 
-// --- Função Principal de Cadastro (Item 29) ---
+double getPrecoProduto(int id) {
+    for(int i=0; i<qtd_produtos; i++) {
+        if(lista_produtos[i].id == id) return lista_produtos[i].preco;
+    }
+    return 0.0;
+}
+
 void inserirPedido() {
-    int id_temp, cliente_temp;
-    char data_temp[11];
-
-    // 1. Prepara a tela
-    clear(); // Limpa a tela do terminal
-    box(stdscr, 0, 0); // Desenha uma borda bonita
-    mvprintw(1, 2, "=== CADASTRAR NOVO PEDIDO ===");
-
-    // 2. Pede o ID do Pedido
-    mvprintw(3, 2, "Digite o ID do Pedido: ");
-    echo(); // Habilita aparecer o que você digita
-    scanw("%d", &id_temp); // Lê o número digitado
-
-    // 3. Verifica se o ID já existe (Usa sua função do Item 28!)
-    if (analisarPedido(id_temp) == 1) {
-        attron(A_BOLD); // Negrito
-        mvprintw(5, 2, "ERRO: Esse ID ja existe no sistema!");
-        attroff(A_BOLD);
-        mvprintw(7, 2, "Pressione qualquer tecla para voltar...");
-        noecho(); // Desabilita o echo
-        getch();  // Espera
-        return;   // Cancela e volta para o menu
+    if (num_pedidos >= MAX_PEDIDOS) {
+        clear(); mvprintw(2, 2, "Erro: Memoria cheia!"); getch(); return;
     }
 
-    // 4. Pede o ID do Cliente
-    mvprintw(4, 2, "Digite o ID do Cliente: ");
-    scanw("%d", &cliente_temp);
-    if(clienteExiste(cliente_temp) == 0) {
-        attron(A_BOLD);
-        mvprintw(6, 2, "ERRO: Cliente ID %d nao encontrado!", cliente_temp);
-        attroff(A_BOLD);
-        mvprintw(8, 2, "Dica: Cadastre o cliente no modulo de Clientes.");
-        mvprintw(10, 2, "Pressione qualquer tecla para voltar...");
-        noecho();
-        getch();
-        return; // Cancela e volta
+    Pedido p;
+    p.total = 0.0;
+    p.qtdProdutos = 0;
+
+    echo(); curs_set(1);
+    clear(); box(stdscr, 0, 0);
+    mvprintw(1, 2, "=== NOVO PEDIDO ===");
+
+    mvprintw(3, 2, "ID do Pedido: ");
+    scanw("%d", &p.id);
+
+    // Validação Cliente
+    while(1) {
+        mvprintw(4, 2, "ID do Cliente:      "); move(4, 17);
+        scanw("%d", &p.clienteId);
+        if(clienteExiste(p.clienteId)) {
+            mvprintw(4, 30, "[OK]"); break;
+        }
+        mvprintw(4, 30, "[Erro: Cliente nao existe]");
     }
 
-    // 5. Pede a Data
     mvprintw(5, 2, "Data (dd/mm/aaaa): ");
-    scanw("%s", data_temp);
+    scanw("%s", p.data);
 
-    // 6. Salvar os dados no Array (Persistência em Memória)
-    if (num_pedidos < MAX_PEDIDOS) {
-        lista_pedidos[num_pedidos].id = id_temp;
-        lista_pedidos[num_pedidos].clienteId = cliente_temp;
-        strcpy(lista_pedidos[num_pedidos].data, data_temp); // Copia a data
-        lista_pedidos[num_pedidos].total = 0.0; // Começa com zero
-        
-        num_pedidos++; // Aumenta o contador de pedidos
-        
-        mvprintw(7, 2, "Sucesso! Pedido cadastrado.");
-    } else {
-        mvprintw(7, 2, "Erro: Lista de pedidos cheia!");
+    // Adicionar Produtos
+    mvprintw(7, 2, "--- Adicionar Produtos (ID 0 para parar) ---");
+    int linha = 8;
+    while(p.qtdProdutos < 10) {
+        int prodId;
+        mvprintw(linha, 2, "Produto %d ID: ", p.qtdProdutos+1);
+        scanw("%d", &prodId);
+
+        if(prodId == 0) break;
+
+        double preco = getPrecoProduto(prodId);
+        if(preco > 0) {
+            p.produtosIds[p.qtdProdutos] = prodId;
+            p.total += preco;
+            p.qtdProdutos++;
+            mvprintw(linha, 25, "R$ %.2f [Add]", preco);
+            linha++;
+        } else {
+            mvprintw(linha, 25, "[Nao encontrado]");
+        }
     }
 
-    // 7. Finalização
-    mvprintw(9, 2, "Pressione qualquer tecla para voltar...");
-    noecho(); // Esconde o cursor de novo para o menu ficar bonito
-    getch();  // Espera o usuário ler
+    // Grava na memória RAM
+    lista_pedidos[num_pedidos] = p;
+    num_pedidos++;
+
+    // --- AQUI QUE SALVA NO ARQUIVO ---
+    salvarPedidos(); 
+    // ---------------------------------
+
+    noecho(); curs_set(0);
+    attron(A_BOLD);
+    mvprintw(linha+2, 2, "Total: R$ %.2f", p.total);
+    mvprintw(linha+4, 2, ">>> Pedido Salvo com Sucesso! <<<");
+    attroff(A_BOLD);
+    getch();
 }
-// --- Função de Consulta (Item 30) ---
+
 void consultarPedido() {
-    int id_busca;
-    int encontrado = 0;
-
-    // 1. Prepara a tela
-    clear();
-    box(stdscr, 0, 0);
+    int id;
+    echo(); curs_set(1); clear(); box(stdscr, 0, 0);
     mvprintw(1, 2, "=== CONSULTAR PEDIDO ===");
+    mvprintw(3, 2, "ID: "); scanw("%d", &id); noecho(); curs_set(0);
 
-    // 2. Pede o ID
-    mvprintw(3, 2, "Digite o ID do Pedido para buscar: ");
-    echo();
-    scanw("%d", &id_busca);
-    noecho(); 
-
-    // 3. Procura na lista
-    for (int i = 0; i < num_pedidos; i++) {
-        if (lista_pedidos[i].id == id_busca) {
-            // ACHOU! Mostra os dados
-            attron(A_BOLD);
-            mvprintw(5, 2, "--- PEDIDO ENCONTRADO ---");
-            attroff(A_BOLD);
-            
-            mvprintw(7, 4, "ID do Pedido:  %d", lista_pedidos[i].id);
-            mvprintw(8, 4, "ID do Cliente: %d", lista_pedidos[i].clienteId);
-            mvprintw(9, 4, "Data:          %s", lista_pedidos[i].data);
-            mvprintw(10, 4, "Total:         R$ %.2f", lista_pedidos[i].total);
-            
-            encontrado = 1; 
-            break; 
+    for(int i=0; i<num_pedidos; i++) {
+        if(lista_pedidos[i].id == id) {
+            mvprintw(5, 2, "Pedido #%d | Cli: %d", lista_pedidos[i].id, lista_pedidos[i].clienteId);
+            mvprintw(6, 2, "Data: %s", lista_pedidos[i].data);
+            mvprintw(7, 2, "Itens: %d", lista_pedidos[i].qtdProdutos);
+            mvprintw(8, 2, "TOTAL: R$ %.2f", lista_pedidos[i].total);
+            getch(); return;
         }
     }
-
-    // 4. Se não achou
-    if (encontrado == 0) {
-        attron(A_BOLD);
-        mvprintw(6, 2, "ERRO: Pedido com ID %d nao encontrado!", id_busca);
-        attroff(A_BOLD);
-    }
-
-    // 5. Finalização
-    mvprintw(12, 2, "Pressione qualquer tecla para voltar...");
-    getch(); 
+    mvprintw(5, 2, "Nao encontrado."); getch();
 }
-// --- Função de Listagem (Item 31) ---
+
 void listarPedidos() {
-    // 1. Prepara a tela
-    clear();
-    box(stdscr, 0, 0);
+    clear(); box(stdscr, 0, 0);
     mvprintw(1, 2, "=== LISTA DE PEDIDOS ===");
-
-    // 2. Verifica se está vazio
-    if (num_pedidos == 0) {
-        mvprintw(3, 2, "Nenhum pedido cadastrado no sistema.");
-    } else {
-        // 3. Cabeçalho da Tabela
-        attron(A_BOLD);
-        mvprintw(3, 2, "ID   | CLIENTE  | DATA        | TOTAL");
-        mvprintw(4, 2, "------------------------------------------");
-        attroff(A_BOLD);
-
-        // 4. Loop para mostrar cada pedido
-        for (int i = 0; i < num_pedidos; i++) {
-            mvprintw(5 + i, 2, "%-4d | %-8d | %-11s | R$ %.2f", 
-                     lista_pedidos[i].id, 
-                     lista_pedidos[i].clienteId, 
-                     lista_pedidos[i].data, 
-                     lista_pedidos[i].total);
-        }
+    for(int i=0; i<num_pedidos; i++) {
+        mvprintw(3+i, 2, "ID: %d | Cli: %d | R$ %.2f", 
+            lista_pedidos[i].id, lista_pedidos[i].clienteId, lista_pedidos[i].total);
     }
-
-    // 5. Finalização
-    mvprintw(LINES - 2, 2, "Pressione qualquer tecla para voltar...");
+    mvprintw(LINES-2, 2, "Total: %d pedidos. Enter para voltar.", num_pedidos);
     getch();
 }
-// --- Função de Remoção (Item 32) ---
+
 void removerPedido() {
-    int id_busca;
-    int encontrado = 0;
-    char confirmacao;
-
-    // 1. Prepara a tela
-    clear();
-    box(stdscr, 0, 0);
+    int id;
+    echo(); curs_set(1); clear(); box(stdscr, 0, 0);
     mvprintw(1, 2, "=== REMOVER PEDIDO ===");
+    mvprintw(3, 2, "ID: "); scanw("%d", &id); noecho(); curs_set(0);
 
-    // 2. Pede o ID
-    mvprintw(3, 2, "Digite o ID do Pedido para EXCLUIR: ");
-    echo();
-    scanw("%d", &id_busca);
-    noecho();
-
-    // 3. Procura na lista
-    for (int i = 0; i < num_pedidos; i++) {
-        if (lista_pedidos[i].id == id_busca) {
-            encontrado = 1;
-
-            // Mostra o que vai ser apagado para confirmar
-            mvprintw(5, 2, "Encontrado: Cliente %d | Total R$ %.2f", 
-                     lista_pedidos[i].clienteId, lista_pedidos[i].total);
-            
-            mvprintw(7, 2, "Tem certeza? (s/n): ");
-            echo();
-            scanw(" %c", &confirmacao); // O espaço antes do %c é importante!
-            noecho();
-
-            if (confirmacao == 's' || confirmacao == 'S') {
-                // --- O PULO DO GATO: REMOÇÃO COM SHIFT ---
-                // Move todos os pedidos da frente uma casa para trás
-                for (int j = i; j < num_pedidos - 1; j++) {
-                    lista_pedidos[j] = lista_pedidos[j + 1];
-                }
-                
-                num_pedidos--; // Diminui o tamanho da lista
-                
-                attron(A_BOLD);
-                mvprintw(9, 2, "Sucesso! Pedido removido.");
-                attroff(A_BOLD);
-            } else {
-                mvprintw(9, 2, "Operacao cancelada.");
-            }
-            break; // Sai do loop de busca
+    for(int i=0; i<num_pedidos; i++) {
+        if(lista_pedidos[i].id == id) {
+            for(int j=i; j<num_pedidos-1; j++) lista_pedidos[j] = lista_pedidos[j+1];
+            num_pedidos--;
+            salvarPedidos(); // Atualiza arquivo
+            mvprintw(5, 2, "Removido!");
+            getch(); return;
         }
     }
-
-    if (encontrado == 0) {
-        attron(A_BOLD);
-        mvprintw(5, 2, "ERRO: Pedido ID %d nao encontrado.", id_busca);
-        attroff(A_BOLD);
-    }
-
-    mvprintw(11, 2, "Pressione qualquer tecla para voltar...");
-    getch();
+    mvprintw(5, 2, "Nao encontrado."); getch();
 }

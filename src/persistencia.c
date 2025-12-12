@@ -1,18 +1,38 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h> 
+#include <sys/types.h>
+#include <ncurses.h>  
 #include "persistencia.h"
 #include "cliente.h"
 #include "produto.h"
 #include "pedido.h"
 
+
+void garantirPastaData() {
+    struct stat st = {0};
+    if (stat("data", &st) == -1) {
+        #ifdef _WIN32
+            mkdir("data"); 
+        #else
+            mkdir("data", 0700); 
+        #endif
+    }
+}
+
 // --- CLIENTES ---
 
 void salvarClientesCSV() {
-    FILE *arquivo = fopen("data/Clientes.csv", "w");
+    garantirPastaData(); 
+    
+    FILE *arquivo = fopen("data/Clientes.csv", "w"); 
     if (arquivo == NULL) {
-        printf("Erro ao abrir data/Clientes.csv\n");
+        // Se der erro, avisa na tela gráfica
+        mvprintw(0, 0, "ERRO CRITICO: Nao foi possivel criar data/Clientes.csv!");
+        refresh();
         return;
     }
+    
     // Salva PF
     for (int i = 0; i < totalPF; i++) {
         fprintf(arquivo, "F;%d;%s;%s;%s;%s;%s\n",
@@ -50,17 +70,17 @@ void carregarClientes() {
     fclose(arquivo);
 }
 
-// --- PRODUTOS (CORRIGIDO: REMOVIDO CAMPO NOME) ---
+// --- PRODUTOS ---
 
 void salvarProdutos() {
+    garantirPastaData(); // Garante a pasta
+    
     FILE *arquivo = fopen("data/Produtos.csv", "w");
     if (arquivo == NULL) return;
     
-    // Cabeçalho: ID, Descricao, Preco, Estoque
     fprintf(arquivo, "ID,Descricao,Preco,Estoque\n");
     
     for (int i = 0; i < qtd_produtos; i++) {
-        // AQUI ESTAVA O ERRO: Removi lista_produtos[i].nome
         fprintf(arquivo, "%d,%s,%.2f,%d\n", 
             lista_produtos[i].id, 
             lista_produtos[i].descricao, 
@@ -78,8 +98,7 @@ void carregarProdutos() {
     char buffer[256];
     fscanf(arquivo, "%[^\n]\n", buffer); // Pula cabeçalho
 
-    // AQUI TAMBÉM: Lê apenas 4 campos agora
-    while (fscanf(arquivo, "%d,%49[^,],%lf,%d\n", 
+    while (fscanf(arquivo, "%d,%99[^,],%lf,%d\n", 
             &lista_produtos[qtd_produtos].id, 
             lista_produtos[qtd_produtos].descricao,
             &lista_produtos[qtd_produtos].preco,
@@ -93,14 +112,18 @@ void carregarProdutos() {
 // --- PEDIDOS ---
 
 void salvarPedidos() {
+    garantirPastaData();
     FILE *arquivo = fopen("data/Pedidos.csv", "w");
     if (arquivo == NULL) return;
 
     fprintf(arquivo, "ID,ClienteID,Data,Total\n");
+    // Ele usa num_pedidos e lista_pedidos que vêm do extern
     for (int i = 0; i < num_pedidos; i++) {
         fprintf(arquivo, "%d,%d,%s,%.2f\n", 
-            lista_pedidos[i].id, lista_pedidos[i].clienteId,
-            lista_pedidos[i].data, lista_pedidos[i].total);
+            lista_pedidos[i].id, 
+            lista_pedidos[i].clienteId,
+            lista_pedidos[i].data, 
+            lista_pedidos[i].total);
     }
     fclose(arquivo);
 }
