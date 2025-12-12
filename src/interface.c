@@ -5,164 +5,202 @@
 #include "pedido.h"
 #include "cliente.h" 
 
-// Função para mostrar o menu do cliente em nCruses
-// Esse menu usa nCurses e funciona assim:
-// Seta CIMA e BAIXO muda a opção selecionada
-// ENTER confirma
-// O item selecionado fica destacado
-void mostrarMenuCliente() {
+// Menu principal do sistema 
+void mostrarMenuPrincipal() 
+{
+    int escolha = 0;  // guarda qual opção está selecionada
+    int tecla;        // guarda a tecla que o usuário pressiona
+    const int totalOp = 4;
 
-    // inicializa a biblioteca ncurses
-    initscr();            // inicia a tela
-    noecho();             // não mostra teclas digitadas
-    cbreak();             // leitura imediata de teclas
-    keypad(stdscr, TRUE); // ativa setas do teclado
-    curs_set(0);          // esconde o cursor
-
-    // ativa cor se disponível
-    if (has_colors()) {
-        start_color();
-        init_pair(1, COLOR_BLACK, COLOR_CYAN);  // cor da opção selecionada
-    }
-
-    int opcao = 0;      // guarda qual linha está selecionada
-    int tecla;          // captura a tecla pressionada
-
-    // lista das opções do menu
-    const char *opcoes[] = {
-        "Cadastrar Cliente",
-        "Consultar Cliente",
-        "Remover Cliente",
-        "Listar Clientes",
-        "Sair"
+    // Lista com as opções do menu
+    char *opcoes[] = {
+        "1. Modulo de Clientes",
+        "2. Modulo de Produtos",
+        "3. Modulo de Pedidos",
+        "4. Sair do Sistema"
     };
 
-    int totalOpcoes = 5;
+    // Mantem o menu rodando até o usuário escolher "Sair"
+    while (1) 
+    {
+        clear(); // limpa toda a tela antes de desenhar o menu
+        // Centralização do menu 
+        int altura = 12;
+        int largura = 45;
+        int posY = (LINES - altura) / 2;
+        int posX = (COLS - largura) / 2;
 
-    while (1) {  // laço principal do menu
+        WINDOW *menuwin = newwin(altura, largura, posY, posX);
+        box(menuwin, 0, 0);
+        mvwprintw(menuwin, 1, 14, "MENU PRINCIPAL");
 
-        clear(); // limpa a tela
-
-        // título do menu
-        mvprintw(1, 2, "=== MENU DO CLIENTE (Ncurses) ===");
-        mvprintw(3, 2, "Use as setas ↑ e ↓ para navegar. ENTER para selecionar.");
-
-        // desenha as opções na tela
-        for (int i = 0; i < totalOpcoes; i++) {
-
-            if (i == opcao) {
-                // destaca a opção selecionada
-                attron(COLOR_PAIR(1));
-                mvprintw(6 + i, 4, "> %s", opcoes[i]);
-                attroff(COLOR_PAIR(1));
+        // Desenhando cada uma das opções do menu
+        for (int i = 0; i < totalOp; i++) 
+        {
+            if (i == escolha) 
+            {
+                wattron(menuwin, A_REVERSE);
+                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
+                wattroff(menuwin, A_REVERSE);
             } else {
-                mvprintw(6 + i, 4, "  %s", opcoes[i]);
+                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
             }
         }
 
-        // refresh atualiza a tela
-        refresh();
+        mvwprintw(menuwin, altura - 2, 2, "Use as setas e Enter");
 
-        // pega a tecla pressionada
+        wrefresh(menuwin);
+
         tecla = getch();
 
-        // movimentação com setas
-        if (tecla == KEY_UP) {
-            opcao--;
-            if (opcao < 0)
-                opcao = totalOpcoes - 1;  // volta para o último
+        // Controle das setas e Enter do menu 
+        switch (tecla) {
+
+            case KEY_UP: 
+                escolha--;
+                if (escolha < 0)
+                    escolha = totalOp - 1; 
+                break;
+
+            case KEY_DOWN: 
+                escolha++;
+                if (escolha >= totalOp)
+                    escolha = 0; 
+                break;
+
+            case 10: 
+                endwin(); 
+                if (escolha == 0) {
+                    mostrarMenuClientes();
+                }
+                else if (escolha == 1) {
+                    mostrarMenuProdutos();
+                }
+                else if (escolha == 2) {
+                    mostrarMenuPedidos();
+                }
+                else if (escolha == 3) {
+                    return; 
+                }
+
+                initscr();
+                cbreak();
+                noecho();
+                keypad(stdscr, TRUE);
+                break;
         }
-        else if (tecla == KEY_DOWN) {
-            opcao++;
-            if (opcao >= totalOpcoes)
-                opcao = 0;          // volta para o primeiro
-        }
-        else if (tecla == '\n') {   // ENTER seleciona
+    }
+}
 
-            // limpa a tela para rodar a ação
-            clear();
-            refresh();
+// Função para mostrar o menu cliente em nCurses
+void mostrarMenuClientes() 
+{
 
-            // executa conforme a opção escolhida
-            switch (opcao) {
+    int escolha = 0;      // índice da opção selecionada
+    int tecla;            // guarda tecla pressionada
+    const int totalOp = 5;
 
-                case 0: // Cadastrar
-                    endwin();        // fecha ncurses para poder usar scanf
-                    cadastrarCliente();
-                    initscr();
-                    keypad(stdscr, TRUE);
-                    noecho();
-                    break;
+    // Opções do menu
+    char *opcoes[] = {
+        "1. Cadastrar Cliente",
+        "2. Consultar Cliente",
+        "3. Remover Cliente",
+        "4. Listar Clientes",
+        "5. Voltar ao Menu Principal"
+    };
 
-                case 1: // Consultar
-                    endwin();
-                    consultarCliente();
-                    initscr();
-                    keypad(stdscr, TRUE);
-                    noecho();
-                    break;
+    // Iniciar a interface ncurses
+    initscr();
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
 
-                case 2: // Remover
-                    endwin();
-                    removerCliente();
-                    initscr();
-                    keypad(stdscr, TRUE);
-                    noecho();
-                    break;
+    while (1) 
+    {
+        clear();
 
-                case 3: // Listar
-                    endwin();
-                    listarClientes();
-                    printf("\nPressione ENTER para voltar ao menu...");
-                    getchar();
-                    initscr();
-                    keypad(stdscr, TRUE);
-                    noecho();
-                    break;
+        // Desenhando a borda e o título do menu 
+        int altura = 12, largura = 45;
+        int starty = (LINES - altura) / 2;
+        int startx = (COLS - largura) / 2;
 
-                case 4: // Sair
-                    endwin();               // fecha ncurses antes de sair
-                    salvarClientesCSV();    // salva tudo no CSV
-                    return;                 // sai da função (volta ao main)
+        WINDOW *menuwin = newwin(altura, largura, starty, startx);
+        box(menuwin, 0, 0);
+
+        mvwprintw(menuwin, 1, 12, "MODULO DE CLIENTES");
+
+        // Mostrar as opções e destacar a selecionada no menu
+        for (int i = 0; i < totalOp; i++) 
+        {
+            if (i == escolha) 
+            {
+                // Destaque da opção selecionada
+                wattron(menuwin, A_REVERSE);
+                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
+                wattroff(menuwin, A_REVERSE);
+            } else {
+                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
             }
         }
-    }
 
-    endwin(); // encerra ncurses
+        mvwprintw(menuwin, altura - 2, 2, "Use as setas e Enter");
+
+        wrefresh(menuwin);
+
+        // Espera o usuário apertar uma tecla
+        tecla = getch();
+
+        // Controle do menu com setas para cima ou para baixo
+        switch (tecla) 
+        {
+            case KEY_UP:
+                escolha--;
+                if (escolha < 0) escolha = totalOp - 1;
+                break;
+
+            case KEY_DOWN:
+                escolha++;
+                if (escolha == totalOp) escolha = 0;
+                break;
+            
+                case 10:  // tecla ENTER
+                // Fechar interface temporariamente
+                endwin();
+                
+                // Execultar a ação escolhida 
+                switch (escolha) 
+                {
+                    case 0:
+                        cadastrarCliente();
+                        break;
+                    
+                    case 1:
+                        consultarCliente();
+                        break;
+                    
+                    case 2:
+                        removerCliente();
+                        break;
+                    
+                    case 3:
+                        listarClientes();
+                        break;
+                
+                    case 4:
+                        return; // volta ao menu principal
+                }
+                // Após fazer a ação, reabrir a interface
+                initscr();
+                cbreak();
+                noecho();
+                keypad(stdscr, TRUE);
+                break;
+        }
+    }
+    // fechar a interface
+    endwin();
 }
 
-
-char *opcoes_pedido[] = {
-    "1. Cadastrar Pedido",
-    "2. Consultar Pedido",
-    "3. Remover Pedido",
-    "4. Listar Pedidos",
-    "5. Voltar ao Menu Principal"};
-int num_opcoes = sizeof(opcoes_pedido) / sizeof(char *);
-
-void desenha_menu_pedidos(WINDOW *menu_win, int destacado)
-{
-    int x = 2, y = 2;
-    box(menu_win, 0, 0);
-
-    mvwprintw(menu_win, 1, (40 - 18) / 2, "MÓDULO DE PEDIDOS");
-
-    for (int i = 0; i < num_opcoes; i++)
-    {
-        if (destacado == i)
-        {
-            wattron(menu_win, A_REVERSE);
-            mvwprintw(menu_win, y + i + 1, x, " > %s", opcoes_pedido[i]);
-            wattroff(menu_win, A_REVERSE);
-        }
-        else
-        {
-            mvwprintw(menu_win, y + i + 1, x, "   %s", opcoes_pedido[i]);
-        }
-    }
-    mvwprintw(menu_win, 8, 2, "-Utilize as setas e Enter-");
-    wrefresh(menu_win);
-}
 
 void mostrarMenuPedidos()
 {
