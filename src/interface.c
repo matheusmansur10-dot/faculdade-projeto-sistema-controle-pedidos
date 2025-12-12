@@ -1,347 +1,162 @@
 #include <ncurses.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "interface.h"
+#include "cliente.h"
+#include "produto.h"
 #include "pedido.h"
-#include "cliente.h" 
 
-// Menu principal do sistema 
-void mostrarMenuPrincipal() 
-{
-    int escolha = 0;  // guarda qual opção está selecionada
-    int tecla;        // guarda a tecla que o usuário pressiona
-    const int totalOp = 4;
+// --- PROTÓTIPOS ---
+void mostrarMenuCliente();
+void mostrarMenuProdutos();
+void mostrarMenuPedidos();
 
-    // Lista com as opções do menu
-    char *opcoes[] = {
-        "1. Modulo de Clientes",
-        "2. Modulo de Produtos",
-        "3. Modulo de Pedidos",
-        "4. Sair do Sistema"
-    };
+// --- FUNÇÃO DE DESENHO GENÉRICA ---
+void desenha_menu_generico(WINDOW *win, char *titulo, char *opcoes[], int n_opcoes, int destaque) {
+    box(win, 0, 0);
+    int largura = getmaxx(win);
+    mvwprintw(win, 1, (largura - strlen(titulo)) / 2, "%s", titulo);
 
-    // Mantem o menu rodando até o usuário escolher "Sair"
-    while (1) 
-    {
-        clear(); // limpa toda a tela antes de desenhar o menu
-        // Centralização do menu 
-        int altura = 12;
-        int largura = 45;
-        int posY = (LINES - altura) / 2;
-        int posX = (COLS - largura) / 2;
-
-        WINDOW *menuwin = newwin(altura, largura, posY, posX);
-        box(menuwin, 0, 0);
-        mvwprintw(menuwin, 1, 14, "MENU PRINCIPAL");
-
-        // Desenhando cada uma das opções do menu
-        for (int i = 0; i < totalOp; i++) 
-        {
-            if (i == escolha) 
-            {
-                wattron(menuwin, A_REVERSE);
-                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
-                wattroff(menuwin, A_REVERSE);
-            } else {
-                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
-            }
+    for (int i = 0; i < n_opcoes; i++) {
+        if (i == destaque) {
+            wattron(win, A_REVERSE);
+            mvwprintw(win, i + 3, 2, " > %s", opcoes[i]);
+            wattroff(win, A_REVERSE);
+        } else {
+            mvwprintw(win, i + 3, 2, "   %s", opcoes[i]);
         }
+    }
+    mvwprintw(win, getmaxy(win) - 2, 2, "Use as setas e Enter");
+    wrefresh(win);
+}
 
-        mvwprintw(menuwin, altura - 2, 2, "Use as setas e Enter");
+// --- MENU DE CLIENTES ---
+void mostrarMenuCliente() {
+    char *opcoes[] = { "1. Cadastrar Cliente", "2. Consultar Cliente", "3. Remover Cliente", "4. Listar Clientes", "5. Voltar" };
+    int n_opcoes = 5;
+    
+    int altura = 12, largura = 45;
+    WINDOW *win = newwin(altura, largura, (LINES - altura)/2, (COLS - largura)/2);
+    keypad(win, TRUE);
 
-        wrefresh(menuwin);
+    int destaque = 0;
+    while(1) {
+        desenha_menu_generico(win, "MODULO DE CLIENTES", opcoes, n_opcoes, destaque);
+        int ch = wgetch(win);
 
-        tecla = getch();
+        switch(ch) {
+            case KEY_UP: if (destaque > 0) destaque--; break;
+            case KEY_DOWN: if (destaque < n_opcoes - 1) destaque++; break;
+            case 10: // Enter
+                if (destaque == 4) { delwin(win); return; }
 
-        // Controle das setas e Enter do menu 
-        switch (tecla) {
+                // Chama direto! O próprio cliente.c agora cuida da tela
+                if (destaque == 0) cadastrarCliente();
+                if (destaque == 1) consultarCliente();
+                if (destaque == 2) removerCliente();
+                if (destaque == 3) listarClientes();
 
-            case KEY_UP: 
-                escolha--;
-                if (escolha < 0)
-                    escolha = totalOp - 1; 
-                break;
-
-            case KEY_DOWN: 
-                escolha++;
-                if (escolha >= totalOp)
-                    escolha = 0; 
-                break;
-
-            case 10: 
-                endwin(); 
-                if (escolha == 0) {
-                    mostrarMenuClientes();
-                }
-                else if (escolha == 1) {
-                    mostrarMenuProdutos();
-                }
-                else if (escolha == 2) {
-                    mostrarMenuPedidos();
-                }
-                else if (escolha == 3) {
-                    return; 
-                }
-
-                initscr();
-                cbreak();
-                noecho();
-                keypad(stdscr, TRUE);
+                clear(); refresh(); keypad(win, TRUE); 
                 break;
         }
     }
 }
 
-// Função para mostrar o menu cliente em nCurses
-void mostrarMenuClientes() 
-{
+// --- MENU DE PRODUTOS ---
+void mostrarMenuProdutos() {
+    char *opcoes[] = { "1. Cadastrar Produto", "2. Consultar Produto", "3. Remover Produto", "4. Listar Produtos", "5. Voltar" };
+    int n_opcoes = 5;
 
-    int escolha = 0;      // índice da opção selecionada
-    int tecla;            // guarda tecla pressionada
-    const int totalOp = 5;
+    int altura = 12, largura = 45;
+    WINDOW *win = newwin(altura, largura, (LINES - altura)/2, (COLS - largura)/2);
+    keypad(win, TRUE);
 
-    // Opções do menu
-    char *opcoes[] = {
-        "1. Cadastrar Cliente",
-        "2. Consultar Cliente",
-        "3. Remover Cliente",
-        "4. Listar Clientes",
-        "5. Voltar ao Menu Principal"
-    };
+    int destaque = 0;
+    while(1) {
+        desenha_menu_generico(win, "MODULO DE PRODUTOS", opcoes, n_opcoes, destaque);
+        int ch = wgetch(win);
 
-    // Iniciar a interface ncurses
-    initscr();
-    cbreak();
-    noecho();
-    keypad(stdscr, TRUE);
+        switch(ch) {
+            case KEY_UP: if (destaque > 0) destaque--; break;
+            case KEY_DOWN: if (destaque < n_opcoes - 1) destaque++; break;
+            case 10: // Enter
+                if (destaque == 4) { delwin(win); return; }
 
-    while (1) 
-    {
-        clear();
+                if (destaque == 0) inserirProduto();
+                if (destaque == 1) consultarProduto(); 
+                if (destaque == 3) listarProdutos(); 
 
-        // Desenhando a borda e o título do menu 
-        int altura = 12, largura = 45;
-        int starty = (LINES - altura) / 2;
-        int startx = (COLS - largura) / 2;
-
-        WINDOW *menuwin = newwin(altura, largura, starty, startx);
-        box(menuwin, 0, 0);
-
-        mvwprintw(menuwin, 1, 12, "MODULO DE CLIENTES");
-
-        // Mostrar as opções e destacar a selecionada no menu
-        for (int i = 0; i < totalOp; i++) 
-        {
-            if (i == escolha) 
-            {
-                // Destaque da opção selecionada
-                wattron(menuwin, A_REVERSE);
-                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
-                wattroff(menuwin, A_REVERSE);
-            } else {
-                mvwprintw(menuwin, i + 3, 2, "%s", opcoes[i]);
-            }
+                clear(); refresh(); keypad(win, TRUE);
+                break;
         }
+    }
+}
 
-        mvwprintw(menuwin, altura - 2, 2, "Use as setas e Enter");
+// --- MENU DE PEDIDOS ---
+void mostrarMenuPedidos() {
+    char *opcoes[] = { "1. Cadastrar Pedido", "2. Consultar Pedido", "3. Remover Pedido", "4. Listar Pedidos", "5. Voltar" };
+    int n_opcoes = 5;
 
-        wrefresh(menuwin);
+    int altura = 12, largura = 45;
+    WINDOW *win = newwin(altura, largura, (LINES - altura)/2, (COLS - largura)/2);
+    keypad(win, TRUE);
 
-        // Espera o usuário apertar uma tecla
-        tecla = getch();
+    int destaque = 0;
+    while(1) {
+        desenha_menu_generico(win, "MODULO DE PEDIDOS", opcoes, n_opcoes, destaque);
+        int ch = wgetch(win);
 
-        // Controle do menu com setas para cima ou para baixo
-        switch (tecla) 
-        {
-            case KEY_UP:
-                escolha--;
-                if (escolha < 0) escolha = totalOp - 1;
+        switch(ch) {
+            case KEY_UP: if (destaque > 0) destaque--; break;
+            case KEY_DOWN: if (destaque < n_opcoes - 1) destaque++; break;
+            case 10: // Enter
+                if (destaque == 4) { delwin(win); return; }
+
+                if (destaque == 0) inserirPedido();
+                if (destaque == 1) consultarPedido();
+                if (destaque == 2) removerPedido();
+                if (destaque == 3) listarPedidos();
+
+                clear(); refresh(); keypad(win, TRUE);
                 break;
+        }
+    }
+}
 
-            case KEY_DOWN:
-                escolha++;
-                if (escolha == totalOp) escolha = 0;
-                break;
-            
-                case 10:  // tecla ENTER
-                // Fechar interface temporariamente
-                endwin();
+// --- MENU PRINCIPAL ---
+void mostrarMenuPrincipal() {
+    char *opcoes[] = { "1. Modulo de Clientes", "2. Modulo de Produtos", "3. Modulo de Pedidos", "4. Sair do Sistema" };
+    int n_opcoes = 4;
+
+    int altura = 12, largura = 45;
+    WINDOW *win = newwin(altura, largura, (LINES - altura)/2, (COLS - largura)/2);
+    keypad(win, TRUE);
+
+    int destaque = 0;
+    while(1) {
+        clear(); refresh(); 
+        desenha_menu_generico(win, "MENU PRINCIPAL", opcoes, n_opcoes, destaque);
+        int ch = wgetch(win);
+
+        switch(ch) {
+            case KEY_UP: if (destaque > 0) destaque--; else destaque = n_opcoes - 1; break;
+            case KEY_DOWN: if (destaque < n_opcoes - 1) destaque++; else destaque = 0; break;
+            case 10: // Enter
+                if (destaque == 3) { delwin(win); endwin(); exit(0); }
+
+                wclear(win); wrefresh(win); 
+                delwin(win); // Fecha menu principal para abrir submenu
                 
-                // Execultar a ação escolhida 
-                switch (escolha) 
-                {
-                    case 0:
-                        cadastrarCliente();
-                        break;
-                    
-                    case 1:
-                        consultarCliente();
-                        break;
-                    
-                    case 2:
-                        removerCliente();
-                        break;
-                    
-                    case 3:
-                        listarClientes();
-                        break;
-                
-                    case 4:
-                        return; // volta ao menu principal
-                }
-                // Após fazer a ação, reabrir a interface
-                initscr();
-                cbreak();
-                noecho();
-                keypad(stdscr, TRUE);
+                if (destaque == 0) mostrarMenuCliente();
+                if (destaque == 1) mostrarMenuProdutos();
+                if (destaque == 2) mostrarMenuPedidos();
+
+                // Recria ao voltar
+                clear(); refresh();
+                win = newwin(altura, largura, (LINES - altura)/2, (COLS - largura)/2);
+                keypad(win, TRUE);
                 break;
         }
     }
-    // fechar a interface
-    endwin();
-}
-
-
-void mostrarMenuPedidos()
-{
-    WINDOW *menu_win;
-    int altura = 10;
-    int largura = 40;
-
-    // Centralizar janela
-    int inicio_y = (LINES - altura) / 2;
-    int inicio_x = (COLS - largura) / 2;
-
-    // Criar a janela
-    menu_win = newwin(altura, largura, inicio_y, inicio_x);
-    keypad(menu_win, TRUE); // Ativa o uso das setas
-
-    int destacado = 0;
-    int ch;
-
-    // loop do menu
-    while (1)
-    {
-        desenha_menu_pedidos(menu_win, destacado);
-        ch = wgetch(menu_win);
-
-        switch (ch)
-        {
-        case KEY_UP:
-            if (destacado > 0)
-                destacado--;
-            break;
-        case KEY_DOWN:
-            if (destacado < num_opcoes - 1)
-                destacado++;
-            break;
-        case 10: // Tecla ENTER
-                // Se escolheu "Voltar" (a última opção)
-                if (destacado == num_opcoes - 1) { 
-                    goto fim_menu; 
-                }
-                
-                // Se escolheu "Cadastrar Pedido" (Opção 0)
-                if (destacado == 0) {
-                    inserirPedido(); 
-                    
-                    // a caixa e limpar a tela para o menu não ficar bugado.
-                    clear(); 
-                    keypad(menu_win, TRUE); // Reativa as setas
-                }
-                if (destacado == 1) { // Consultar (Opção 1)
-                    consultarPedido();
-                    clear();
-                    keypad(menu_win, TRUE);
-                }
-                if (destacado == 2) { 
-                    removerPedido();
-                    clear();
-                    keypad(menu_win, TRUE);
-                }
-                if (destacado == 3) { 
-                    listarPedidos();
-                    clear();
-                    keypad(menu_win, TRUE);
-                }
-            break;
-        }
-    }
-fim_menu:
-    delwin(menu_win); // remove a janela
-}
-
-// Interface Menu Principal Produtos
-char *opcoes_produto[] = {
-    "1. Cadastrar Produto",
-    "2. Consultar Produto",
-    "3. Remover Produto",
-    "4. Listar Produtos",
-    "5. Sair",
-};
-int num_opcoes_prod = sizeof(opcoes_produto) / sizeof(char *);
-void desenha_menu_produtos(WINDOW *menu_j, int destacado, int n_opcoes)
-{
-    int x = 2, y = 2;
-    box(menu_j, 0, 0);
-    // título
-    mvwprintw(menu_j, 1, (40 - 18) / 2, "MODULO DE PRODUTOS");
-    // opções
-    for (int cont = 0; cont < n_opcoes; cont++)
-    {
-        if (cont == destacado)
-        {
-            wattron(menu_j, A_REVERSE); // A_REVERSE é usada para destacar a opção selecionada no menu
-            mvwprintw(menu_j, y + cont + 1, x, " > %s", opcoes_produto[cont]);
-            wattroff(menu_j, A_REVERSE);
-        }
-        else
-        {
-            mvwprintw(menu_j, y + cont + 1, x, "  %s", opcoes_produto[cont]);
-        }
-    }
-    // instruções
-    mvwprintw(menu_j, 8, 2, "Use setas e Enter");
-    wrefresh(menu_j);
-}
-
-void mostrarMenuProdutos()
-{
-    WINDOW *menu_j;
-    int altura = 10;
-    int largura = 40;
-
-    int inicio_y = (LINES - altura) / 2;
-    int inicio_x = (COLS - largura) / 2;
-
-    menu_j = newwin(altura, largura, inicio_y, inicio_x);
-    keypad(menu_j, TRUE);
-
-    int destacado = 0;
-    int ch = 0;
-
-    while (1)
-    {
-        desenha_menu_produtos(menu_j, destacado, num_opcoes_prod);
-        ch = wgetch(menu_j);
-        switch (ch)
-        {
-        case KEY_UP:
-            if (destacado > 0)
-                destacado--;
-            break;
-        case KEY_DOWN:
-            if (destacado < num_opcoes_prod - 1)
-                destacado++;
-            break;
-        case 10:
-            if (destacado == num_opcoes_prod - 1)
-            {
-                goto fim_menu;
-            }
-            break;
-        }
-    }
-fim_menu:
-    delwin(menu_j);
 }

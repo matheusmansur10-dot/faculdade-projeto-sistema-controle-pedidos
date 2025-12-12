@@ -1,11 +1,14 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <ncurses.h> // Biblioteca gráfica
 #include "produto.h"
 #include "persistencia.h"
-#define MAX_PRODUTOS 100 // determina o tamanho maximo do array estático
 
-Produto lista_produtos[MAX_PRODUTOS]; // variavel do tipo produto
-int qtd_produtos = 0;                 // numero de produtos cadastrados
+Produto lista_produtos[MAX_PRODUTOS];
+int qtd_produtos = 0;
+
+// --- Funções Auxiliares ---
 
 int analisarProduto(int id)
 {
@@ -13,301 +16,233 @@ int analisarProduto(int id)
     {
         if (lista_produtos[i].id == id)
         {
-            return i;
+            return i; // Retorna o índice onde achou
         }
     }
-    return -1;
+    return -1; // Não encontrou
 }
 
-// função para cadastrar produto
+// --- Funções Visuais ---
+
 void inserirProduto()
 {
-    Produto novo_produto;
-
-    printf("\n==== CADASTRAR PRODUTO ====\n");
-
-    if (qtd_produtos >= MAX_PRODUTOS) // verifica se mais produtos podem ser cadastrados
+    if (qtd_produtos >= MAX_PRODUTOS)
     {
-        printf("ERRO: O limite máximo de %d produtos foi atingido. Não é possível cadastrar.\n", MAX_PRODUTOS);
+        clear();
+        mvprintw(2, 2, "ERRO: Limite de produtos atingido!");
+        getch();
         return;
     }
 
-    for (;;)
-    {
-        printf("\nInforme o código (ID) do produto: ");
+    Produto p;
+    echo(); 
+    curs_set(1);
+    clear();
+    box(stdscr, 0, 0);
 
-        // verifica se a leitura é válida (não é número)
-        if (scanf("%d", &novo_produto.id) != 1)
-        {
-            printf("Entrada inválida. Tente novamente com um número inteiro.\n");
-            while (getchar() != '\n' && getchar() != EOF)
-                ; // limpa o buffer
+    mvprintw(1, 2, "=== CADASTRAR PRODUTO ===");
+
+    // Loop de validação do ID
+    while(1) {
+        mvprintw(3, 2, "ID do Produto:      "); // Espaços para limpar input anterior
+        move(3, 17); // Posiciona cursor
+        if (scanw("%d", &p.id) != 1) {
+            mvprintw(LINES-2, 2, "Erro: Digite apenas numeros!");
+            continue;
         }
-        // verifica se o produto já foi cadastrado. Se sim, a função a retornará 1
-        if (analisarProduto(novo_produto.id) != -1)
-        {
-            printf("ERRO: O código %d já existe. Por favor, digite um novo código.\n", novo_produto.id);
+        
+        if (analisarProduto(p.id) != -1) {
+            mvprintw(LINES-2, 2, "Erro: ID %d ja existe! Tente outro.", p.id);
+            continue;
         }
-        else
-        {
-            // código único e válido: Sai do loop
-            break;
-        }
+        // Limpa linha de erro
+        move(LINES-2, 0); clrtoeol(); 
+        break;
     }
-    printf("Informe a descrição do produto: ");
-    scanf(" %[^\n]", novo_produto.descricao);
 
-    printf("Informe o preço (R$): ");
-    scanf("%lf", &novo_produto.preco);
+    mvprintw(5, 2, "Descricao: ");
+    scanw(" %[^\n]", p.descricao);
 
-    printf("Informe a quantidade em estoque: ");
-    scanf("%d", &novo_produto.estoque);
+    mvprintw(6, 2, "Preco (R$): ");
+    scanw("%lf", &p.preco);
 
-    lista_produtos[qtd_produtos] = novo_produto; // caso o produto ainda não tenha sido cadastrado, ele será adicionado ao banco de dados lista_produtos
+    mvprintw(7, 2, "Estoque: ");
+    scanw("%d", &p.estoque);
+
+    // Salvar
+    lista_produtos[qtd_produtos] = p;
     qtd_produtos++;
-    printf("\nProduto cadastrado com sucesso!\n");
-    return;
+    salvarProdutos(); // Salva no arquivo imediatamente
+
+    noecho();
+    curs_set(0);
+    attron(A_BOLD);
+    mvprintw(9, 2, ">>> Produto cadastrado com sucesso! <<<");
+    attroff(A_BOLD);
+    
+    mvprintw(11, 2, "Pressione qualquer tecla...");
+    getch();
 }
 
 void editarProduto()
 {
-    int id_edicao;
-    int indice;
+    int id, indice;
     char confirmacao;
 
-    printf("\n==== EDITAR PRODUTO ====\n");
+    echo(); curs_set(1);
+    clear(); box(stdscr, 0, 0);
+    mvprintw(1, 2, "=== EDITAR PRODUTO ===");
+    
+    mvprintw(3, 2, "ID do produto para editar: ");
+    scanw("%d", &id);
 
-    printf("Digite o ID do produto que deseja editar: ");
+    indice = analisarProduto(id);
 
-    if (scanf("%d", &id_edicao) != 1) // garante que um inteiro seja lido
-    {
-        printf("\nERRO: Entrada inválida. Digite um número inteiro.\n");
-        while (getchar() != '\n' && getchar() != EOF)
-            ;
+    if (indice == -1) {
+        noecho();
+        mvprintw(5, 2, "ERRO: Produto ID %d nao encontrado.", id);
+        getch();
         return;
     }
 
-    indice = analisarProduto(id_edicao);
+    Produto temp = lista_produtos[indice];
+    char buffer[100]; // Buffer temporário para ler strings
 
-    if (indice != -1) // quando o produto for encontrado
-    {
-        // criação de uma cópia do item para trabalhar nela. O item original fica no vetor.
-        Produto produto_temp = lista_produtos[indice];
+    mvprintw(5, 2, "--- Dados Atuais ---");
+    mvprintw(6, 2, "Descricao: %s", temp.descricao);
+    mvprintw(7, 2, "Preco:     R$ %.2f", temp.preco);
+    mvprintw(8, 2, "Estoque:   %d", temp.estoque);
 
-        printf("\nProduto encontrado - ID %d.\n", lista_produtos[indice].id);
-        printf("=======================================\n");
-        printf("Descrição atual: %s\n", lista_produtos[indice].descricao);
-        printf("Preço atual: R$ %.2f\n", lista_produtos[indice].preco);
-        printf("Estoque atual: %d\n", lista_produtos[indice].estoque);
+    mvprintw(10, 2, "--- Novos Dados (Enter para manter) ---");
 
-        printf("\n-- Novas Informações --\n");
+    // Editar Descrição
+    mvprintw(12, 2, "Nova Descricao: ");
+    getnstr(buffer, 99); // Leitura segura de string
+    if(strlen(buffer) > 0) strcpy(temp.descricao, buffer);
 
-        char nova_descricao[100];
-        printf("Nova Descrição (Enter para manter atual: %s): ", lista_produtos[indice].descricao);
+    // Editar Preço
+    mvprintw(13, 2, "Novo Preco: ");
+    getnstr(buffer, 99);
+    if(strlen(buffer) > 0) temp.preco = atof(buffer);
 
-        if (scanf(" %[^\n]", nova_descricao) == 1 && strlen(nova_descricao) > 0)
-        {
-            // a alteração é feita na CÓPIA TEMPORÁRIA
-            strcpy(produto_temp.descricao, nova_descricao);
-        }
-        while (getchar() != '\n' && getchar() != EOF)
-            ;
+    // Editar Estoque
+    mvprintw(14, 2, "Novo Estoque: ");
+    getnstr(buffer, 99);
+    if(strlen(buffer) > 0) temp.estoque = atoi(buffer);
 
-        float novo_preco;
-        printf("Novo Preço (R$ %.2f para manter): ", lista_produtos[indice].preco);
+    // Confirmar
+    mvprintw(16, 2, "Confirma alteracao? (S/N): ");
+    scanw(" %c", &confirmacao);
 
-        // checa se a leitura foi bem-sucedida e se o valor é positivo/diferente de zero (para manter)
-        if (scanf("%f", &novo_preco) == 1 && novo_preco > 0)
-        {
-            produto_temp.preco = novo_preco;
-        }
-        else
-        {
-            while (getchar() != '\n' && getchar() != EOF)
-                ;
-        }
-
-        int nova_quantidade;
-        printf("Novo Estoque (%d para manter): ", lista_produtos[indice].estoque);
-
-        // Checa se a leitura foi bem-sucedida e se o valor é não-negativo/diferente de zero
-        if (scanf("%d", &nova_quantidade) == 1 && nova_quantidade >= 0 && nova_quantidade != 0)
-        {
-            // A alteração é feita na CÓPIA TEMPORÁRIA
-            produto_temp.estoque = nova_quantidade;
-        }
-        else
-        {
-            // limpa o buffer se a leitura falhar
-            while (getchar() != '\n' && getchar() != EOF)
-                ;
-        }
-
-        // limpa o buffer final antes da confirmação
-        while (getchar() != '\n' && getchar() != EOF)
-            ;
-
-        // nenhuma alteração foi salva no vetor principal ainda
-
-        printf("\nConfirma as alterações? (S/N): ");
-        scanf(" %c", &confirmacao);
-
-        if (confirmacao == 'S' || confirmacao == 's')
-        {
-            // se confirmado, copia a versão modificada de volta para o vetor
-            lista_produtos[indice] = produto_temp;
-            printf("\nProduto com ID %d atualizado com sucesso.\n", lista_produtos[indice].id);
-        }
-        else
-        {
-            // não faz nada. O item original é mantido.
-            printf("\nOperação de edição cancelada. Os dados foram mantidos.\n");
-        }
-    }
-    else
-    {
-        printf("\nERRO: Produto com ID %d não encontrado no sistema.\n", id_edicao);
+    if (confirmacao == 'S' || confirmacao == 's') {
+        lista_produtos[indice] = temp;
+        salvarProdutos();
+        mvprintw(18, 2, "Produto atualizado com sucesso!");
+    } else {
+        mvprintw(18, 2, "Operacao cancelada.");
     }
 
-    return;
+    noecho(); curs_set(0);
+    getch();
 }
 
 void consultarProduto()
 {
-    int id_consulta;
-    int indice;
-    char confirmacao;
+    int id, indice;
+    char conf;
+    
+    echo(); curs_set(1);
+    clear(); box(stdscr, 0, 0);
+    mvprintw(1, 2, "=== CONSULTAR PRODUTO ===");
+    mvprintw(3, 2, "Digite o ID: ");
+    scanw("%d", &id);
+    noecho(); curs_set(0);
 
-    printf("\n==== CONSULTAR PRODUTO ====\n");
-    printf("Digite o ID do produto: ");
+    indice = analisarProduto(id);
 
-    // verificação do valor digitado pelo usuario
-
-    if (scanf("%d", &id_consulta) != 1)
-    {
-        printf("\nERRO: Entrada inválida. Digite um número inteiro.\n");
-        while (getchar() != '\n' && getchar() != EOF)
-            ;
-        return;
-    }
-    // limpa o buffer após leitura bem-sucedida do ID
-    while (getchar() != '\n' && getchar() != EOF)
-        ;
-
-    indice = analisarProduto(id_consulta);
-
-    if (indice != -1) // produto encontrado
-    {
-        // o índice retornado é usado para acessar os dados
-        printf("\nProduto encontrado:\n");
-        printf("ID: %d\n", lista_produtos[indice].id);
-        printf("Descrição: %s\n", lista_produtos[indice].descricao);
-        printf("Preço: R$ %.2f\n", lista_produtos[indice].preco);
-        printf("Estoque: %d unidades\n", lista_produtos[indice].estoque);
-        printf("\n--------------------------\n");
-        printf("Deseja editar este produto (S/N)? ");
-        scanf(" %c", &confirmacao);
-        while (getchar() != '\n' && getchar() != EOF)
-            ;
-        if (confirmacao == 'S' || confirmacao == 's')
-        {
-            editarProduto(indice);
+    if (indice != -1) {
+        mvprintw(5, 2, "Produto Encontrado:");
+        mvprintw(7, 2, "ID:        %d", lista_produtos[indice].id);
+        mvprintw(8, 2, "Descricao: %s", lista_produtos[indice].descricao);
+        mvprintw(9, 2, "Preco:     R$ %.2f", lista_produtos[indice].preco);
+        mvprintw(10, 2, "Estoque:   %d", lista_produtos[indice].estoque);
+        
+        mvprintw(12, 2, "Deseja editar? (S/N): ");
+        echo();
+        scanw(" %c", &conf);
+        noecho();
+        
+        if(conf == 'S' || conf == 's') {
+            editarProduto(); // Chama a função de edição
+            return;
         }
-        else
-        {
-            printf("Retornando ao menu principal.\n");
-        }
+    } else {
+        mvprintw(5, 2, "Produto nao encontrado.");
     }
-    else // produto não encontrado
-    {
-        printf("\n ERRO: Produto com ID %d não encontrado no sistema.\n", id_consulta);
-    }
-    return;
+    mvprintw(14, 2, "Pressione qualquer tecla...");
+    getch();
 }
 
 void listarProdutos()
 {
-    printf("\n==== LISTAGEM DE PRODUTOS CADASTRADOS ====\n");
-
-    // verifica se há produtos cadastrados
-    if (qtd_produtos == 0)
-    {
-        printf("\nNenhum produto encontrado no sistema.\n");
-        return;
+    clear(); box(stdscr, 0, 0);
+    mvprintw(1, 2, "=== LISTA DE PRODUTOS ===");
+    
+    if (qtd_produtos == 0) {
+        mvprintw(3, 2, "Nenhum produto cadastrado.");
+    } else {
+        attron(A_UNDERLINE);
+        mvprintw(3, 2, "ID   | Descricao            | Preco      | Estoque");
+        attroff(A_UNDERLINE);
+        
+        for (int i = 0; i < qtd_produtos; i++) {
+            // Limita a exibição para não estourar a tela
+            if (4+i >= LINES-2) break; 
+            
+            mvprintw(4+i, 2, "%-4d | %-20s | R$ %-7.2f | %d", 
+                lista_produtos[i].id, 
+                lista_produtos[i].descricao, 
+                lista_produtos[i].preco, 
+                lista_produtos[i].estoque);
+        }
     }
 
-    // Título da Tabela
-    printf("------------------------------------------------------------------------\n");
-    printf("| %-4s | %-30s | %-10s | %-10s |\n", "ID", "DESCRIÇÃO", "PREÇO (R$)", "ESTOQUE");
-    printf("------------------------------------------------------------------------\n");
-
-    // o loop 'for' percorre o vetor de produtos até a quantidade total cadastrada
-    for (int i = 0; i < qtd_produtos; i++)
-    {
-        // exibe os dados do produto atual
-        printf("| %-4d | %-30s | R$ %-7.2f | %-10d |\n",
-               lista_produtos[i].id,
-               lista_produtos[i].descricao,
-               lista_produtos[i].preco,
-               lista_produtos[i].estoque);
-    }
-
-    printf("------------------------------------------------------------------------\n");
-    printf("\nTotal de %d produto(s) listado(s).\n", qtd_produtos);
-
-    return;
+    mvprintw(LINES-2, 2, "Total: %d produtos. Pressione qualquer tecla...", qtd_produtos);
+    getch();
 }
 
 void removerProduto()
 {
-    int id_remocao;
-    int indice;
-    char confirmacao;
+    int id, indice;
+    char conf;
 
-    printf("\n==== REMOVER PRODUTO ====\n");
+    echo(); curs_set(1);
+    clear(); box(stdscr, 0, 0);
+    mvprintw(1, 2, "=== REMOVER PRODUTO ===");
+    mvprintw(3, 2, "ID para remover: ");
+    scanw("%d", &id);
+    noecho(); curs_set(0);
 
-    printf("Digite o ID do produto a ser removido: ");
+    indice = analisarProduto(id);
 
-    if (scanf("%d", &id_remocao) != 1)
-    {
-        printf("\nERRO: Entrada inválida. Digite um número inteiro.\n");
-        return;
-    }
+    if (indice != -1) {
+        mvprintw(5, 2, "Produto: %s", lista_produtos[indice].descricao);
+        mvprintw(6, 2, "Tem certeza? (S/N): ");
+        echo(); scanw(" %c", &conf); noecho();
 
-    // limpa o buffer após o scanf
-    while (getchar() != '\n' && getchar() != EOF)
-        ;
-
-    // o sistema analisa o produto
-    indice = analisarProduto(id_remocao);
-
-    if (indice != -1) // produto encontrado
-    {
-        printf("\nProduto encontrado: ID %d | Descrição: %s\n", lista_produtos[indice].id, lista_produtos[indice].descricao);
-        printf("Tem certeza que deseja remover este produto (S/N)? ");
-        scanf(" %c", &confirmacao);
-
-        if (confirmacao == 'S' || confirmacao == 's')
-        {
-            // o produto é retirado do cadastro
-
-            // loop de deslocamento para a esquerda
-            for (int j = indice; j < qtd_produtos - 1; j++)
-            {
+        if (conf == 'S' || conf == 's') {
+            // Desloca o vetor para a esquerda
+            for (int j = indice; j < qtd_produtos - 1; j++) {
                 lista_produtos[j] = lista_produtos[j + 1];
             }
             qtd_produtos--;
-            printf("\nProduto com ID %d removido com sucesso.\n", id_remocao);
+            salvarProdutos(); // Salva alteração
+            mvprintw(8, 2, "Produto removido com sucesso!");
+        } else {
+            mvprintw(8, 2, "Operacao cancelada.");
         }
-        else
-        {
-            printf("\nOperação de remoção cancelada. Produto mantido.\n");
-        }
+    } else {
+        mvprintw(5, 2, "Produto nao encontrado.");
     }
-    else // caso não exista o produto
-    {
-        printf("\nERRO: Produto com ID %d não encontrado no sistema.\n", id_remocao);
-    }
-
-    return;
+    getch();
 }

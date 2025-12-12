@@ -2,22 +2,25 @@
 #include "cliente.h"
 #include "produto.h"
 #include "pedido.h"
-#include "persistencia.h" // Importante: O cabeçalho novo
+#include "persistencia.h" 
+
+
+void mostrarMenuCliente();   
+void mostrarMenuPedidos();
 
 int main() {
-    // --- Inicialização do Ncurses ---
+    
     initscr();
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
 
-    // --- 1. CARREGAR DADOS (Ao abrir o programa) ---
-    // Chama as funções do persistencia.c para ler os arquivos da pasta data/
+    
     carregarClientes();
     carregarProdutos();
     carregarPedidos();
 
-    
+    mostrarMenuPrincipal();
     mostrarMenuCliente();
     mostrarMenuProdutos(); 
     mostrarMenuPedidos();
