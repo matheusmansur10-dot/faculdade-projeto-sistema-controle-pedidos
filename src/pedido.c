@@ -74,7 +74,7 @@ void inserirPedido() {
 // --- Função de Consulta (Item 30) ---
 void consultarPedido() {
     int id_busca;
-    int encontrado = 0; // 0 = não achou, 1 = achou
+    int encontrado = 0;
 
     // 1. Prepara a tela
     clear();
@@ -85,7 +85,7 @@ void consultarPedido() {
     mvprintw(3, 2, "Digite o ID do Pedido para buscar: ");
     echo();
     scanw("%d", &id_busca);
-    noecho(); // Desativa o echo logo depois de ler
+    noecho(); 
 
     // 3. Procura na lista
     for (int i = 0; i < num_pedidos; i++) {
@@ -100,12 +100,12 @@ void consultarPedido() {
             mvprintw(9, 4, "Data:          %s", lista_pedidos[i].data);
             mvprintw(10, 4, "Total:         R$ %.2f", lista_pedidos[i].total);
             
-            encontrado = 1; // Marca que achamos
-            break; // Para o loop, já achamos o que queríamos
+            encontrado = 1; 
+            break; 
         }
     }
 
-    // 4. Se percorreu tudo e não achou
+    // 4. Se não achou
     if (encontrado == 0) {
         attron(A_BOLD);
         mvprintw(6, 2, "ERRO: Pedido com ID %d nao encontrado!", id_busca);
@@ -114,5 +114,5 @@ void consultarPedido() {
 
     // 5. Finalização
     mvprintw(12, 2, "Pressione qualquer tecla para voltar...");
-    getch(); // Espera o usuário ler
+    getch(); 
 }
